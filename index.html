@@ -63,9 +63,17 @@ p{margin:0}
 .tabs button[aria-selected="true"]{background:var(--fill-2); color:var(--label)}
 
 .brand{display:flex; align-items:center; justify-content:center; padding-top:22px}
-.wordmark{font-family:"Inter Tight", var(--font); font-weight:800; font-size:clamp(44px,7vw,64px); letter-spacing:-.055em; line-height:.95;
-  padding:0 .06em .08em 0; background:linear-gradient(100deg, var(--c-pre) 0%, var(--c-post) 58%, var(--c-in) 100%);
-  -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; user-select:none}
+/* wordmark: solid label colour; a "pencil" dot visits each letter once on load, tap to replay */
+.wordmark{position:relative; font-family:"Inter Tight", var(--font); font-weight:800; font-size:clamp(44px,7vw,60px); letter-spacing:-.045em; line-height:1;
+  color:var(--label); padding:0 0 .2em; cursor:default; -webkit-user-select:none; user-select:none; font-feature-settings:"cv05","cv11"}
+.wm-l{display:inline-block; transition:color .35s var(--ease), transform .5s cubic-bezier(.34,1.4,.64,1)}
+.wordmark.pre .wm-l{color:var(--label-3)}
+.wordmark .wm-l.v{color:var(--label)}
+.wordmark .wm-l.lift{transform:translateY(-.07em)}
+.wm-dot{position:absolute; left:0; bottom:.04em; width:.13em; height:.13em; margin-left:-.065em; border-radius:50%; background:var(--tint);
+  opacity:0; transform:translateX(0) scale(.4); transition:transform .16s var(--ease), opacity .3s var(--ease)}
+.wm-dot.on{opacity:1}
+.wm-dot.gone{opacity:0; transform:var(--wm-x) scale(.2)}
 .hero{display:flex; flex-direction:column; gap:6px; padding-top:4px}
 .hero p{font-size:17px; color:var(--label-2); max-width:62ch}
 
@@ -1494,6 +1502,35 @@ $('tPrev').addEventListener('click',()=>{trickStop();const pv=trickStops().filte
 $('tReset').addEventListener('click',()=>{trickStop();T.d=0;trickRender();});
 
 $('sheetToTrick').addEventListener('click',()=>{showTab('trick');window.scrollTo({top:0,behavior:'smooth'});});
+
+/* ---------- wordmark ---------- */
+(function(){
+  const wm=document.querySelector('.wordmark');if(!wm)return;
+  const word=wm.textContent.trim();wm.setAttribute('aria-label',word);
+  wm.innerHTML=[...word].map(c=>`<span class="wm-l" aria-hidden="true">${c}</span>`).join('')+'<span class="wm-dot" aria-hidden="true"></span>';
+  const letters=[...wm.querySelectorAll('.wm-l')],dot=wm.querySelector('.wm-dot');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)');let timers=[];
+  function run(){
+    if(reduce.matches)return;
+    timers.forEach(clearTimeout);timers=[];
+    wm.classList.add('pre');letters.forEach(l=>l.classList.remove('v','lift'));
+    const at=l=>`translateX(${l.offsetLeft+l.offsetWidth/2}px)`;
+    dot.className='wm-dot';dot.style.transition='none';dot.style.transform=at(letters[0])+' scale(.4)';void dot.offsetWidth;dot.style.transition='';
+    const step=150;
+    timers.push(setTimeout(()=>{dot.classList.add('on');},40));
+    letters.forEach((l,i)=>{
+      timers.push(setTimeout(()=>{dot.style.transform=at(l)+' scale(1)';},80+i*step));
+      timers.push(setTimeout(()=>{l.classList.add('v','lift');},140+i*step));
+      timers.push(setTimeout(()=>{l.classList.remove('lift');},140+i*step+260));
+    });
+    const end=140+letters.length*step;
+    timers.push(setTimeout(()=>{dot.style.setProperty('--wm-x',at(letters[letters.length-1]));dot.style.transform='';dot.classList.add('gone');},end+120));
+    timers.push(setTimeout(()=>{wm.classList.remove('pre');},end+500));
+  }
+  wm.addEventListener('click',run);
+  const go=()=>requestAnimationFrame(run);
+  (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,800))]):Promise.resolve()).then(go);
+})();
 
 /* ---------- boot ---------- */
 fillPresets();setDataLabel();$('dataIn').value=PRESETS.tree[0][1];loadData($('dataIn').value);renderStats();
