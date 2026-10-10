@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Animated pre-, in-, post- and level-order traversals on trees and linked lists, the outline trick, practice questions and a cheat sheet.">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230088ff'/%3E%3Cpath d='M16 9L9 21M16 9l7 12' stroke='white' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='9' r='4' fill='white'/%3E%3Ccircle cx='9' cy='22' r='4' fill='white'/%3E%3Ccircle cx='23' cy='22' r='4' fill='white'/%3E%3C/svg%3E">
 <title>Traver</title>
 <style>
 /* Layout: Apple grouped-list ground; floating glass nav on top, floating glass player at the bottom, content in borderless grouped cells */
@@ -26,6 +34,9 @@
   --kw:#ff7ab2; --c-pre:#0091ff; --c-in:#ff9230; --c-post:#db34f2; --hl-line:rgba(255,214,0,.22); color-scheme:dark;
 }
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top, 0px); padding-bottom:env(safe-area-inset-bottom, 0px)}
+body{margin:0}
 [hidden]{display:none!important}
 body{background:var(--bg); color:var(--label); font-family:var(--font); font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased; letter-spacing:-.003em}
 button,select,input{font:inherit; color:inherit; letter-spacing:inherit}
@@ -75,7 +86,7 @@ select{padding-right:32px; appearance:none; -webkit-appearance:none; cursor:poin
 .datarow .txt{flex:1}
 
 /* stage */
-.stage{padding:18px; display:flex; flex-direction:column; gap:14px}
+.stage{min-width:0; padding:18px; display:flex; flex-direction:column; gap:14px}
 .narr{display:flex; flex-direction:column; gap:2px}
 .narr .eyebrow{font-size:13px; color:var(--label-2); font-variant-numeric:tabular-nums}
 .narr p{font-size:18px; font-weight:600; line-height:1.3; letter-spacing:-.01em; min-height:2.6em}
@@ -173,7 +184,23 @@ select{padding-right:32px; appearance:none; -webkit-appearance:none; cursor:poin
 .insight strong{color:var(--label)}
 
 /* practice */
-.pgrid{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start}
+.pwrap{width:100%; max-width:880px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+.statbar{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); background:var(--cell); border-radius:22px; padding:12px 6px}
+.statbar div{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0}
+.statbar div + div{box-shadow:inset .5px 0 0 var(--sep)}
+.statbar b{font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+.statbar span{font-size:12px; color:var(--label-2)}
+.qhead{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px; color:var(--label-2)}
+.qhead b{color:var(--label); font-variant-numeric:tabular-nums}
+.progress{height:6px; border-radius:999px; background:var(--fill); overflow:hidden}
+.progress i{display:block; height:100%; width:0; background:var(--tint); border-radius:999px; transition:width .35s var(--ease)}
+.hintbox{background:var(--hl-line); border-radius:12px; padding:10px 14px; font-size:14px}
+.hintbox:empty{display:none}
+.sumcard{padding:24px; display:flex; flex-direction:column; gap:16px; align-items:flex-start}
+.sumcard .big{font-size:48px; font-weight:700; letter-spacing:-.022em; line-height:1}
+.sumcard .big span{font-size:22px; color:var(--label-2); font-weight:600}
+.sumcard .rows{width:100%; background:var(--cell-2)}
+.hit{fill:transparent}
 .qcard{padding:20px; display:flex; flex-direction:column; gap:14px}
 .qtext{font-size:22px; font-weight:700; letter-spacing:-.015em; line-height:1.25}
 .qtext em{font-style:normal; color:var(--orange)}
@@ -261,9 +288,10 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
 .tcontrols .slider{margin-left:auto}
 .tcontrols .icon{background:var(--fill)}
 .tcontrols .icon.play{background:var(--tint)}
-.tn circle{fill:var(--cell); stroke:var(--sep); stroke-width:1; transition:fill .25s var(--ease)}
+.tn circle.hit{fill:transparent; stroke:none}
+.tn circle:not(.hit){fill:var(--cell); stroke:var(--sep); stroke-width:1; transition:fill .25s var(--ease)}
 .tn text{fill:var(--label); font:600 16px var(--font); text-anchor:middle; dominant-baseline:central}
-.tn.cur circle{fill:var(--yellow); stroke:var(--yellow)} .tn.cur text{fill:var(--on-warm)}
+.tn.cur circle:not(.hit){fill:var(--yellow); stroke:var(--yellow)} .tn.cur text{fill:var(--on-warm)}
 .tedge{stroke:var(--label-3); stroke-width:2}
 .tstub{stroke:var(--label-2); stroke-width:2; stroke-dasharray:4 3; stroke-linecap:round}
 .tguide{fill:none; stroke:var(--label-3); stroke-width:1.5; stroke-dasharray:2 5; stroke-linecap:round; transition:opacity .4s var(--ease)}
@@ -296,10 +324,10 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
 .tnull-new{stroke:var(--orange); stroke-width:2}
 .tstub.new{stroke:var(--orange)}
 #trickSvg.pick .tn{cursor:pointer}
-#trickSvg.pick .tn:hover circle{stroke:var(--tint); stroke-width:2.5}
-.tn.wrong circle{fill:var(--red); stroke:var(--red)} .tn.wrong text{fill:#fff}
+#trickSvg.pick .tn:hover circle:not(.hit){stroke:var(--tint); stroke-width:2.5}
+.tn.wrong circle:not(.hit){fill:var(--red); stroke:var(--red)} .tn.wrong text{fill:#fff}
 .tn.wrong{animation:shake .35s}
-.tn.full circle{stroke:var(--green); stroke-width:2.5}
+.tn.full circle:not(.hit){stroke:var(--green); stroke-width:2.5}
 .why1{padding:16px; display:flex; flex-direction:column; gap:10px; border:2px solid var(--orange)}
 .why1 h3{font-size:17px; font-weight:600; display:flex; align-items:center; gap:8px}
 .why1 h3 b{width:22px; height:22px; border-radius:50%; background:var(--orange); color:var(--on-warm); display:grid; place-items:center; font-size:12px}
@@ -314,7 +342,7 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
 .tprompt em{font-style:normal}
 
 @media (max-width:1040px){
-  .workspace{grid-template-columns:1fr}
+  .workspace{grid-template-columns:minmax(0,1fr)}
   .workspace .stage{position:static}
   .panels{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr) minmax(0,1fr); gap:16px; align-items:start}
 }
@@ -325,8 +353,26 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
   .sheet{grid-template-columns:1fr}
 }
 @media (max-width:560px){
-  .tabs button{padding:0 13px; font-size:14px}
+  .nav{padding-top:6px}
+  .tabs{width:100%}
+  .tabs button{flex:1; padding:0 4px; font-size:13px; min-height:38px}
+  .hero h1{font-size:30px}
+  .hero p{font-size:15px}
+  .statbar b{font-size:20px}
+  .qcard,.sumcard{padding:16px}
+  .qtext{font-size:19px}
+  .choices{display:grid; grid-template-columns:1fr 1fr}
+  .actions .btn{flex:1 1 auto}
+  .intro h2{font-size:24px}
+  .intro p{font-size:15px}
+  .tnarr{font-size:16px}
+  .tcontrols .slider{width:100%; margin:4px 0 0}
+  .sheet .cell{padding:16px}
+  .exrow .seqs{font-size:14px; letter-spacing:.1em}
+  #tab-viz .panels > .cell:nth-child(3){order:-1}
   .controls > .field{flex:1 1 100%}
+  .controls > .field.half{flex:1 1 40%}
+  .field.half select{width:100%}
   .seg{display:flex; width:100%}
   .seg button{flex:1; padding:0 6px; font-size:13px}
   .datarow{flex-wrap:wrap}
@@ -347,7 +393,7 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
     </nav>
   </div>
 
-  <header class="hero">
+  <header class="hero" id="hero">
     <h1>Traver</h1>
     <p>Watch pre-order, in-order, post-order and level-order run one step at a time on binary trees and linked lists. Then practise the questions exams ask.</p>
   </header>
@@ -522,40 +568,70 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
 
   <!-- ================= PRACTICE ================= -->
   <section id="tab-practice" hidden style="flex-direction:column; gap:20px">
-    <div class="controls">
-      <div class="field"><span class="cap">Question type</span>
-        <div class="seg" id="segQ">
-          <button data-v="click" aria-pressed="true">Tap the Order</button>
-          <button data-v="name" aria-pressed="false">Name It</button>
-          <button data-v="rebuild" aria-pressed="false">Rebuild</button>
+    <div class="pwrap">
+      <div class="statbar" aria-label="Your stats">
+        <div><b id="sStreak">0</b><span>Streak</span></div>
+        <div><b id="sBest">0</b><span>Best</span></div>
+        <div><b id="sAcc">–</b><span>First try</span></div>
+        <div><b id="sTotal">0</b><span>Answered</span></div>
+      </div>
+
+      <div class="controls">
+        <div class="field"><span class="cap">Session</span>
+          <div class="seg" id="segSess">
+            <button data-v="endless" aria-pressed="true">Endless</button>
+            <button data-v="set" aria-pressed="false">10-Question Set</button>
+          </div>
+        </div>
+        <div class="field"><span class="cap">Questions</span>
+          <div class="seg" id="segQ">
+            <button data-v="mixed" aria-pressed="true">Mixed</button>
+            <button data-v="click" aria-pressed="false">Tap Order</button>
+            <button data-v="name" aria-pressed="false">Name It</button>
+            <button data-v="rebuild" aria-pressed="false">Rebuild</button>
+          </div>
+        </div>
+        <div class="field half"><label class="cap" for="qOrder">Traversal</label>
+          <select id="qOrder"><option value="any">Any</option><option value="pre">Pre-order</option><option value="in">In-order</option><option value="post">Post-order</option><option value="level">Level-order</option></select>
+        </div>
+        <div class="field half"><label class="cap" for="qStruct">Structures</label>
+          <select id="qStruct"><option value="mix">Trees and Lists</option><option value="tree">Trees Only</option><option value="list">Lists Only</option></select>
         </div>
       </div>
-      <div class="field" id="qStructWrap"><label class="cap" for="qStruct">Structures</label>
-        <select id="qStruct"><option value="mix">Trees and Lists</option><option value="tree">Trees Only</option><option value="list">Lists Only</option></select>
-      </div>
-    </div>
-    <div class="pgrid">
-      <div class="cell qcard">
+
+      <div class="cell qcard" id="qCard">
+        <div class="qhead"><span id="qMeta"></span><b id="qProg"></b></div>
+        <div class="progress" id="qBar" hidden><i id="qBarFill"></i></div>
         <div class="qtext" id="qText"></div>
         <div id="qSeqs" style="display:flex; flex-direction:column; gap:8px"></div>
         <div class="canvas" id="qBoardWrap"><svg id="qSvg" role="img" aria-label="Question diagram"></svg></div>
         <div id="qAnswer"></div>
+        <div class="hintbox" id="qHint"></div>
         <div class="feedback" id="qFb" aria-live="polite"></div>
         <div class="actions">
-          <button class="btn prominent" id="qNext">New Question</button>
-          <button class="btn" id="qReveal">Show Answer</button>
-          <button class="btn plain" id="qWatch">Watch Animation</button>
+          <button class="btn prominent" id="qNext" hidden>Next Question</button>
+          <button class="btn" id="qHintBtn">Hint</button>
+          <button class="btn plain" id="qReveal">Show Answer</button>
+          <button class="btn plain" id="qSkip">Skip</button>
+          <button class="btn plain" id="qWatch" hidden>Watch Animation</button>
         </div>
       </div>
-      <div class="side">
-        <div class="rows">
-          <div class="rowi"><span class="t"><b>Solved first try</b></span><span class="v" id="sCorrect">0</span></div>
-          <div class="rowi"><span class="t"><b>Attempted</b></span><span class="v" id="sTotal">0</span></div>
-          <div class="rowi"><span class="t"><b>Current streak</b></span><span class="v" id="sStreak">0</span></div>
-          <div class="rowi"><span class="t"><b>Best streak</b></span><span class="v" id="sBest">0</span></div>
+
+      <div class="cell sumcard" id="qSummary" hidden>
+        <span class="cap" style="padding:0">Set complete</span>
+        <div class="big" id="sumScore">0<span> / 10</span></div>
+        <p id="sumMsg" style="font-size:17px"></p>
+        <div class="rows" id="sumRows"></div>
+        <div class="actions">
+          <button class="btn prominent" id="sumAgain">Start Another Set</button>
+          <button class="btn plain" id="sumEndless">Back to Endless</button>
         </div>
-        <div class="cell tip" id="qTip"></div>
       </div>
+
+      <details class="cell more">
+        <summary>How to approach it</summary>
+        <div class="body" id="qTip"></div>
+      </details>
     </div>
   </section>
 
@@ -727,6 +803,7 @@ function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[
 
 const ORDERS={pre:['visit','left','right'],in:['left','visit','right'],post:['left','right','visit']};
 const ALL=['pre','in','post','level'];
+const DOTW={pre:'left',in:'bottom',post:'right'};
 const ONAME={pre:'Pre-order',in:'In-order',post:'Post-order',level:'Level-order'};
 const FN={pre:'preorder',in:'inorder',post:'postorder',level:'levelorder'};
 
@@ -808,14 +885,14 @@ class Board{
       this.nullTerm=S('text',{x:last.px+38+48,y:y,class:'nullterm','dominant-baseline':'central'},svg);this.nullTerm.textContent='null';
     }
     this.W=W;this.H=H;
-    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.maxWidth=Math.round(W*1.35)+'px';svg.style.minWidth=Math.min(W,520)+'px';
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.maxWidth=Math.round(W*1.35)+'px';svg.style.minWidth=Math.round(W*0.55)+'px';
     this.ghost=S('g',{class:'ghost'},svg);this.ghost.style.display='none';
     this.gLine=S('line',{},this.ghost);this.gCirc=S('circle',{r:12},this.ghost);this.gText=S('text',{},this.ghost);this.gText.textContent='∅';
     this.flagG=S('g',{},svg);
     const ng=S('g',{},svg);
     st.nodes.forEach(n=>{
       const g=S('g',{class:'n',transform:`translate(${n.px},${n.py})`,tabindex:'-1','data-id':n.id,'aria-label':n.val},ng);
-      if(st.mode==='tree'){S('circle',{r:25,class:'ring'},g);S('circle',{r:20,class:'body'},g);S('text',{class:'val'},g).textContent=n.val;}
+      if(st.mode==='tree'){S('circle',{r:27,class:'hit'},g);S('circle',{r:25,class:'ring'},g);S('circle',{r:20,class:'body'},g);S('text',{class:'val'},g).textContent=n.val;}
       else{S('rect',{x:-43,y:-25,width:86,height:50,rx:14,class:'ring'},g);S('rect',{x:-38,y:-20,width:76,height:40,rx:10,class:'body'},g);S('line',{x1:14,y1:-20,x2:14,y2:20,class:'divider'},g);
         S('circle',{cx:26,cy:0,r:3.5,class:'nextdot'},g);const t=S('text',{class:'val',x:-12},g);t.textContent=n.val;}
       const bx=st.mode==='tree'?17:36,by=st.mode==='tree'?-17:-20;
@@ -1065,82 +1142,143 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- tabs ---------- */
-function showTab(t){['viz','trick','practice','sheet'].forEach(k=>{const el=$('tab-'+k);el.hidden=k!==t;if(k!=='sheet')el.style.display=k===t?'flex':'';$('t-'+k).setAttribute('aria-selected',k===t);});
+function showTab(t){$('hero').hidden=t!=='viz';['viz','trick','practice','sheet'].forEach(k=>{const el=$('tab-'+k);el.hidden=k!==t;if(k!=='sheet')el.style.display=k===t?'flex':'';$('t-'+k).setAttribute('aria-selected',k===t);});
   if(t!=='viz')stop();if(t!=='trick')trickStop();if(t==='trick')trickInit();if(t==='practice'&&!Q.cur)newQuestion();}
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab);});
 
 /* ---------- Practice ---------- */
 const qb=new Board($('qSvg'),'q');
-const Q={type:'click',cur:null};
+const Q={type:'mixed',session:'endless',cur:null,set:null};
+const TYPE_NAME={click:'Tap the order',name:'Name the traversal',rebuild:'Rebuild the tree'};
 let stats={correct:0,total:0,streak:0,best:0};
 try{const s=JSON.parse(localStorage.getItem('traversal-lab-stats'));if(s&&typeof s.total==='number')stats=s;}catch(e){}
 function saveStats(){try{localStorage.setItem('traversal-lab-stats',JSON.stringify(stats));}catch(e){}renderStats();}
-function renderStats(){$('sCorrect').textContent=stats.correct;$('sTotal').textContent=stats.total;$('sStreak').textContent=stats.streak;$('sBest').textContent=stats.best;}
-function record(ok){if(Q.cur.recorded)return;Q.cur.recorded=true;stats.total++;if(ok){stats.correct++;stats.streak++;stats.best=Math.max(stats.best,stats.streak);}else stats.streak=0;saveStats();}
+function renderStats(){$('sStreak').textContent=stats.streak;$('sBest').textContent=stats.best;$('sTotal').textContent=stats.total;
+  $('sAcc').textContent=stats.total?Math.round(stats.correct/stats.total*100)+'%':'–';}
 const TIPS={
-  click:'<h3>How to approach it</h3><p>For pre, in and post, imagine a dot on the left, bottom or right of each node. Trace around the tree anticlockwise from the root and tap each node as you pass its dot. For level-order, tap row by row, left to right.</p><p>A wrong tap resets your streak, but you can keep going.</p>',
-  name:'<h3>How to approach it</h3><p>Look at the ends first. If it ends with the root, it’s post-order. If it starts with the root, it’s pre-order or level-order: is the second value a direct child of the root, and does the order go row by row? If the root is in the middle, it’s in-order.</p><p>Some structures give the same output for more than one order. Every matching answer counts as correct.</p>',
-  rebuild:'<h3>How to approach it</h3><p>The root is the first value in pre-order or the last in post-order. Find it in the in-order list to split the rest into left and right subtrees. Repeat on each side, then read off the order asked for.</p><p>Separate values with spaces or commas.</p>'
+  click:'<p><b>Use the outline trick.</b> Picture a dot on each node’s left (pre), underside (in) or right (post). Trace anticlockwise from the root and tap each node as you pass its dot.</p><p><b>Level-order:</b> row by row, left to right.</p><p>Tap <b>Hint</b> to draw the dots on the tree.</p>',
+  name:'<p><b>Check the ends.</b> Root last → post-order. Root in the middle → in-order. Root first → pre-order or level-order. Level-order goes row by row; pre-order dives down the left first.</p><p>If two orders give the same output, either answer counts.</p>',
+  rebuild:'<p><b>Find the root:</b> the first value of pre-order, or the last value of post-order.</p><p><b>Split the in-order list at the root:</b> the left part is the left subtree and the right part is the right subtree. Repeat on each side, then read off the order you’re asked for.</p>'
 };
 function qStructMode(){const v=$('qStruct').value;return v==='mix'?pick(['tree','tree','list']):v;}
+function setFb(t,c){$('qFb').className='feedback'+(c?' '+c:'');$('qFb').textContent=t;}
+function setDoneUI(done){$('qNext').hidden=!done;$('qWatch').hidden=!done;$('qHintBtn').hidden=done;$('qReveal').hidden=done;$('qSkip').hidden=done||Q.session==='set';
+  if(done){$('qNext').textContent=Q.session==='set'&&Q.set.i>=Q.set.n?'See Results':'Next Question';$('qNext').focus({preventScroll:true});}}
+function finish(ok){
+  const c=Q.cur;if(c.done)return;c.done=true;
+  const clean=ok&&!c.mistakes&&!c.hinted&&!c.revealed;
+  stats.total++;if(clean){stats.correct++;stats.streak++;stats.best=Math.max(stats.best,stats.streak);}else stats.streak=0;saveStats();
+  if(Q.session==='set'){Q.set.results.push({type:c.type,clean});Q.set.i++;updateProg();}
+  setDoneUI(true);
+}
+function updateProg(){
+  const set=Q.session==='set';$('qBar').hidden=!set;
+  if(!set){$('qProg').textContent='';return;}
+  const shown=Math.min(Q.set.i+(Q.cur&&!Q.cur.done?1:0),Q.set.n);
+  $('qProg').textContent=`${Math.max(shown,1)} of ${Q.set.n}`;$('qBarFill').style.width=(Q.set.i/Q.set.n*100)+'%';
+}
+function pickOrder(){const v=$('qOrder').value;return v==='any'?pick(ALL):v;}
 function newQuestion(){
-  const type=Q.type;$('qFb').textContent='';$('qFb').className='feedback';$('qAnswer').innerHTML='';$('qSeqs').innerHTML='';
-  $('qTip').innerHTML=TIPS[type];$('qStructWrap').hidden=type==='rebuild';
+  if(Q.session==='set'&&Q.set.i>=Q.set.n){showSummary();return;}
+  $('qCard').hidden=false;$('qSummary').hidden=true;
+  const type=Q.type==='mixed'?pick(['click','click','name','rebuild']):Q.type;
+  setFb('');$('qHint').textContent='';$('qAnswer').innerHTML='';$('qSeqs').innerHTML='';
+  $('qTip').innerHTML=TIPS[type];
   const mode=type==='rebuild'?'tree':qStructMode();
   const root=mode==='tree'?randomTree(type==='rebuild'?5+rnd(3):5+rnd(5)):randomList(4+rnd(4));
-  const st=makeStruct(mode,root);const order=pick(ALL);
-  Q.cur={type,mode,st,order,picked:[],mistakes:0,done:false,recorded:false};
-  qb.onPick=null;qb.levels=false;qb.build(st);qb.setPickable(false);qb.update({cur:null,stack:[],out:[]});
+  const st=makeStruct(mode,root);
+  Q.cur={type,mode,st,order:pickOrder(),picked:[],mistakes:0,done:false,hinted:false,revealed:false};
+  $('qMeta').textContent=`${TYPE_NAME[type]} · ${mode==='list'?'Linked list':'Binary tree'}`;
+  qb.onPick=null;qb.levels=false;qb.flags=null;qb.build(st);qb.setPickable(false);qb.update({cur:null,stack:[],out:[]});
+  setDoneUI(false);updateProg();
   const seqStr=o=>traverseIds(root,o).map(n=>n.val).join('  ');
   if(type==='click'){
+    const order=Q.cur.order;
     $('qText').innerHTML=`Tap the nodes in <em>${ONAME[order]}</em> order.`;
     $('qBoardWrap').hidden=false;qb.setPickable(true);
     const expect=traverseIds(root,order).map(n=>n.id);
     qb.onPick=id=>{const c=Q.cur;if(c.done||c.picked.includes(id))return;
       if(id===expect[c.picked.length]){c.picked.push(id);qb.update({cur:null,stack:[],out:c.picked});
-        if(c.picked.length===expect.length){c.done=true;record(c.mistakes===0);
-          $('qFb').className='feedback ok';$('qFb').textContent=c.mistakes?`✓ Complete, with ${c.mistakes} wrong tap${c.mistakes>1?'s':''}.`:'✓ Correct on the first try.';}
-        else{$('qFb').className='feedback';$('qFb').textContent=`${c.picked.length} of ${expect.length} so far.`;}}
-      else{c.mistakes++;qb.flash(id);if(c.mistakes===1)record(false);const nv=st.nodes.find(n=>n.id===id).val;
-        $('qFb').className='feedback bad';$('qFb').textContent=`✕ ${nv} doesn’t come next. Try another node.`;}};
+        if(c.picked.length===expect.length){finish(true);
+          setFb(c.mistakes?`✓ Complete, with ${c.mistakes} wrong tap${c.mistakes>1?'s':''}.`:c.hinted?'✓ Correct, with a hint.':'✓ Correct on the first try.',c.mistakes?'':'ok');}
+        else setFb(`${c.picked.length} of ${expect.length} so far.`);}
+      else{c.mistakes++;qb.flash(id);const nv=st.nodes.find(n=>n.id===id).val;setFb(`✕ ${nv} doesn’t come next. Try another node.`,'bad');}};
   }else if(type==='name'){
+    const order=pick(ALL);Q.cur.order=order;
     $('qText').innerHTML='Which traversal gives this output?';$('qBoardWrap').hidden=false;
     $('qSeqs').innerHTML=`<div class="seq"><span>Output</span>${esc(seqStr(order))}</div>`;
-    const target=seqStr(order);const okSet=ALL.filter(o=>seqStr(o)===target);
+    const target=seqStr(order);const okSet=ALL.filter(o=>seqStr(o)===target);Q.cur.okSet=okSet;
     $('qAnswer').innerHTML='<div class="choices">'+ALL.map(o=>`<button class="btn" data-o="${o}">${ONAME[o]}</button>`).join('')+'</div>';
     $('qAnswer').querySelector('.choices').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||Q.cur.done)return;
-      const ok=okSet.includes(b.dataset.o);Q.cur.done=true;record(ok);
+      const ok=okSet.includes(b.dataset.o);
       $('qAnswer').querySelectorAll('button').forEach(x=>{if(okSet.includes(x.dataset.o))x.classList.add('right');else if(x===b)x.classList.add('wrongc');});
-      qb.update({cur:null,stack:[],out:traverseIds(root,okSet[0]).map(n=>n.id)});
-      $('qFb').className='feedback '+(ok?'ok':'bad');
-      $('qFb').textContent=(ok?'✓ Correct. ':'✕ Not quite. ')+(okSet.length>1?`On this ${mode==='list'?'list':'tree'}, ${okSet.map(o=>ONAME[o]).join(', ')} all give this output.`:`The answer is ${ONAME[okSet[0]]}.`);});
+      qb.update({cur:null,stack:[],out:traverseIds(root,okSet[0]).map(n=>n.id)});finish(ok);
+      setFb((ok?'✓ Correct. ':'✕ Not quite. ')+(okSet.length>1?`On this ${mode==='list'?'list':'tree'}, ${okSet.map(o=>ONAME[o]).join(', ')} all give this output.`:`The answer is ${ONAME[okSet[0]]}.`),ok?'ok':'bad');});
   }else{
-    const pair=pick([['pre','in','post'],['in','post','pre'],['level','in','post']]);Q.cur.order=pair[2];
+    const want=$('qOrder').value;
+    let pairs=[['pre','in','post'],['in','post','pre'],['level','in','post'],['level','in','pre']];
+    if(want==='pre'||want==='post')pairs=pairs.filter(p=>p[2]===want);
+    const pair=pick(pairs);Q.cur.order=pair[2];Q.cur.pair=pair;
     $('qText').innerHTML=`Using these two traversals, write the <em>${ONAME[pair[2]]}</em>.`;
     $('qBoardWrap').hidden=true;
     $('qSeqs').innerHTML=pair.slice(0,2).map(o=>`<div class="seq"><span>${ONAME[o]}</span>${esc(seqStr(o))}</div>`).join('');
-    $('qAnswer').innerHTML=`<div class="datarow"><input class="txt" id="qInput" placeholder="For example: 12 7 31" spellcheck="false" autocomplete="off" aria-label="Your answer"><button class="btn prominent" id="qCheck">Check</button></div>`;
+    $('qAnswer').innerHTML=`<div class="datarow"><input class="txt" id="qInput" placeholder="For example: 12 7 31" spellcheck="false" autocomplete="off" autocapitalize="off" inputmode="text" aria-label="Your answer"><button class="btn prominent" id="qCheck">Check</button></div>`;
     const expect=traverseIds(root,pair[2]).map(n=>n.val);
-    const check=()=>{const got=tokens($('qInput').value);if(!got.length)return;
+    const check=()=>{if(Q.cur.done)return;const got=tokens($('qInput').value);if(!got.length)return;
       const ok=got.length===expect.length&&got.every((v,i)=>v===expect[i]);
-      if(ok){Q.cur.done=true;record(Q.cur.mistakes===0);$('qFb').className='feedback ok';$('qFb').textContent='✓ Correct. This is the tree you rebuilt.';reveal(true);}
-      else{Q.cur.mistakes++;record(false);const firstBad=got.findIndex((v,i)=>v!==expect[i]);
-        $('qFb').className='feedback bad';$('qFb').textContent=firstBad===-1||firstBad>=expect.length?`✕ The answer has ${expect.length} values, but you entered ${got.length}.`:`✕ The first ${firstBad} value${firstBad===1?' is':'s are'} right. Check value ${firstBad+1}.`;}};
-    $('qCheck').addEventListener('click',check);$('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')check();});
+      if(ok){reveal(true);finish(true);setFb(Q.cur.mistakes?'✓ Correct this time. This is the tree you rebuilt.':'✓ Correct. This is the tree you rebuilt.','ok');}
+      else{Q.cur.mistakes++;const firstBad=got.findIndex((v,i)=>v!==expect[i]);
+        setFb(firstBad===-1||firstBad>=expect.length?`✕ The answer has ${expect.length} values, but you entered ${got.length}.`:`✕ The first ${firstBad} value${firstBad===1?' is':'s are'} right. Check value ${firstBad+1}.`,'bad');}};
+    $('qCheck').addEventListener('click',check);$('qInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.stopPropagation();Q.cur.done?newQuestion():check();}});
+  }
+}
+function giveHint(){
+  const c=Q.cur;if(!c||c.done)return;c.hinted=true;const root=c.st.root;
+  if(c.type==='click'){
+    if(c.order==='level'){qb.setLevels(true);$('qHint').textContent='Read the rows top to bottom, each one left to right.';}
+    else{qb.setFlags(c.order);qb.update({cur:null,stack:[],out:c.picked});
+      $('qHint').textContent=`Trace anticlockwise from the root. Tap each node as you pass its ${DOTW[c.order]} dot.`;}
+  }else if(c.type==='name'){
+    const seq=traverseIds(root,c.order);const at=seq.findIndex(n=>n===root);
+    const where=at===0?'first':at===seq.length-1?'last':'in the middle';
+    $('qHint').textContent=`The root is ${root.val}, and it appears ${where} in the output.`;
+  }else{
+    const [a]=c.pair;const ins=traverseIds(root,'in').map(n=>n.val);const k=ins.indexOf(root.val);
+    $('qHint').textContent=`The root is ${root.val}${a==='pre'?' (first in pre-order)':a==='in'?' (last in post-order)':' (first in level-order)'}. In-order splits into [${ins.slice(0,k).join(' ')||'empty'}] | ${root.val} | [${ins.slice(k+1).join(' ')||'empty'}].`;
   }
 }
 function reveal(silent){
   const c=Q.cur;if(!c)return;
-  if(!c.done&&!silent)record(false);
-  c.done=true;$('qBoardWrap').hidden=false;
+  $('qBoardWrap').hidden=false;
   const ids=traverseIds(c.st.root,c.order).map(n=>n.id);qb.update({cur:null,stack:[],out:ids});
-  if(!silent){$('qFb').className='feedback';$('qFb').textContent=`${ONAME[c.order]}: ${traverseIds(c.st.root,c.order).map(n=>n.val).join(', ')}`;
-    if(c.type==='name')$('qAnswer').querySelectorAll('button').forEach(x=>{if(traverseIds(c.st.root,x.dataset.o).map(n=>n.id).join()===ids.join())x.classList.add('right');});}
+  if(silent)return;
+  c.revealed=true;
+  if(c.type==='name')$('qAnswer').querySelectorAll('button').forEach(x=>{if(c.okSet.includes(x.dataset.o))x.classList.add('right');});
+  finish(false);
+  setFb(c.type==='name'?`The answer is ${c.okSet.map(o=>ONAME[o]).join(' or ')}.`:`${ONAME[c.order]}: ${traverseIds(c.st.root,c.order).map(n=>n.val).join(', ')}`);
 }
-$('segQ').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;Q.type=b.dataset.v;setPressed($('segQ'),Q.type);newQuestion();});
-$('qStruct').addEventListener('change',newQuestion);
+function startSession(){Q.set=Q.session==='set'?{n:10,i:0,results:[]}:null;Q.cur=null;newQuestion();}
+function showSummary(){
+  $('qCard').hidden=true;$('qSummary').hidden=false;
+  const r=Q.set.results;const score=r.filter(x=>x.clean).length;
+  $('sumScore').innerHTML=`${score}<span> / ${r.length}</span>`;
+  $('sumMsg').textContent=score>=9?'Exam ready. Keep the streak going.':score>=6?'Solid. Look again at the question types you dropped.':'Worth another pass. Try The Trick tab, then come back.';
+  $('sumRows').innerHTML=Object.keys(TYPE_NAME).map(t=>{const xs=r.filter(x=>x.type===t);if(!xs.length)return'';
+    return `<div class="rowi"><span class="t"><b>${TYPE_NAME[t]}</b></span><span class="v">${xs.filter(x=>x.clean).length} / ${xs.length}</span></div>`;}).join('');
+  $('qBarFill').style.width='100%';
+}
+$('segSess').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.dataset.v===Q.session)return;Q.session=b.dataset.v;setPressed($('segSess'),Q.session);startSession();});
+$('segQ').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;Q.type=b.dataset.v;setPressed($('segQ'),Q.type);if(Q.session==='set')startSession();else newQuestion();});
+$('qStruct').addEventListener('change',()=>{if(!Q.cur||!Q.cur.done||Q.session==='endless')newQuestion();});
+$('qOrder').addEventListener('change',()=>{if(Q.session==='endless')newQuestion();});
 $('qNext').addEventListener('click',newQuestion);
+$('qSkip').addEventListener('click',newQuestion);
+$('qHintBtn').addEventListener('click',giveHint);
 $('qReveal').addEventListener('click',()=>reveal(false));
+$('sumAgain').addEventListener('click',startSession);
+$('sumEndless').addEventListener('click',()=>{Q.session='endless';setPressed($('segSess'),'endless');startSession();});
+document.addEventListener('keydown',e=>{if($('tab-practice').hidden||e.key!=='Enter'||!Q.cur||!Q.cur.done)return;
+  if(document.activeElement&&document.activeElement.tagName==='INPUT')return;if(!$('qNext').hidden&&document.activeElement!==$('qNext')){e.preventDefault();newQuestion();}});
 $('qWatch').addEventListener('click',()=>{const c=Q.cur;if(!c)return;
   V.mode=c.mode;setPressed($('segMode'),V.mode);fillPresets();setDataLabel();$('preset').value='custom';
   V.order=c.order;setPressed($('segOrder'),V.order);
@@ -1152,7 +1290,7 @@ const T={segs:[],events:[],stubs:[],nodes:[],total:0,S:0,U:70,d:0,playing:false,
 const NEXTK={top:'left',left:'bottom',bottom:'right',right:'top'};
 const ANG={top:-Math.PI/2,left:Math.PI,bottom:Math.PI/2,right:0};
 const SIDE={pre:'left side',in:'underside',post:'right side'};
-const DOTW={pre:'left',in:'bottom',post:'right'};
+
 const KOF={left:'pre',bottom:'in',right:'post'};
 const rOf=n=>n.stub?T.RS:T.R;
 function trickBuild(root){
@@ -1162,7 +1300,7 @@ function trickBuild(root){
   const gx=64,gy=88,pad=60,top=52;const span=(i-1)*gx;const W=Math.max(span+pad*2,360);const off=(W-span)/2;
   nodes.forEach(n=>{n.tx=off+n._x*gx;n.ty=top+n._depth*gy;});
   const H=top+maxD*gy+72;
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.maxWidth=Math.round(W*1.4)+'px';svg.style.minWidth=Math.min(W,520)+'px';
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.maxWidth=Math.round(W*1.4)+'px';svg.style.minWidth=Math.round(W*0.55)+'px';
   // step 1: an empty edge for every missing child, so every node has exactly two
   const stubs=[];
   nodes.forEach(n=>['left','right'].forEach(side=>{if(n[side])return;
@@ -1189,7 +1327,7 @@ function trickBuild(root){
   T.trace.style.strokeDasharray=T.traceLen;T.trace.style.strokeDashoffset=T.traceLen;
   const sq=S('g',{},svg);stubs.forEach(st=>{st.sq=S('rect',{x:st.tx-5,y:st.ty-5,width:10,height:10,rx:2.5,class:'tnull'},sq);st.sq.style.opacity=0;});
   T.nodeEls={};const ng=S('g',{},svg);
-  nodes.forEach(n=>{const g=S('g',{class:'tn',transform:`translate(${n.tx},${n.ty})`,'aria-label':n.val},ng);S('circle',{r:20},g);S('text',{},g).textContent=n.val;T.nodeEls[n.id]=g;
+  nodes.forEach(n=>{const g=S('g',{class:'tn',transform:`translate(${n.tx},${n.ty})`,'aria-label':n.val},ng);S('circle',{r:30,class:'hit'},g);S('circle',{r:20},g);S('text',{},g).textContent=n.val;T.nodeEls[n.id]=g;
     g.addEventListener('click',()=>trickPick(n));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();trickPick(n);}});});
   const dg=S('g',{},svg);events.forEach(e=>{e.el=S('circle',{cx:e.x,cy:e.y,r:6,class:'tdot '+e.kind},dg);});
   T.pen=S('circle',{r:7,class:'tpen',cx:wp[0].x,cy:wp[0].y},svg);
