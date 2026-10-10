@@ -67,7 +67,7 @@ p{margin:0}
 .brand{display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:14px; padding-bottom:10px; min-height:50px}
 .wmwrap{display:flex; align-items:center; gap:10px; min-width:0}
 .wordmark{position:relative; display:inline-flex; align-items:flex-start; height:1.5em; padding:0; margin:0; border:0; background:none; cursor:pointer;
-  font-family:"Inter Tight", var(--font); font-weight:800; font-size:30px; letter-spacing:-.045em; line-height:1.15; color:var(--label);
+  font-family:"Inter Tight", var(--font); font-weight:800; font-size:38px; letter-spacing:-.045em; line-height:1.15; color:var(--label);
   -webkit-user-select:none; user-select:none; font-feature-settings:"cv05","cv11"}
 .wordmark:active{opacity:1}
 .wm-l{display:inline-block; transition:transform .55s cubic-bezier(.34,1.45,.64,1), color .3s var(--ease)}
@@ -80,8 +80,9 @@ p{margin:0}
 .wm-edge{position:absolute; left:0; top:0; pointer-events:none; overflow:visible; opacity:0; transition:opacity .3s var(--ease)}
 .wm-edge line{stroke:var(--sep); stroke-width:1.25; stroke-linecap:round}
 .wordmark.tree .wm-edge{opacity:1}
-.wm-cap{font-size:12px; font-weight:600; color:var(--label-2); white-space:nowrap; opacity:0; transform:translateX(-4px); transition:opacity .3s var(--ease), transform .3s var(--ease), margin .55s cubic-bezier(.34,1.45,.64,1)}
+.wm-cap{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--label-2); background:var(--fill); border-radius:999px; padding:4px 10px 4px 8px; white-space:nowrap; opacity:0; transform:translateX(-4px); transition:opacity .3s var(--ease), transform .3s var(--ease), margin .55s cubic-bezier(.34,1.45,.64,1)}
 .wm-cap.show{opacity:1; transform:none}
+.wm-cap::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--tint)}
 .about-btn{width:32px; height:32px; border-radius:50%; border:0; background:var(--fill); color:var(--label-2); display:grid; place-items:center; cursor:pointer; flex:none; padding:0}
 .about-btn svg{width:18px; height:18px; fill:currentColor}
 .about-btn:active{opacity:.7}
@@ -96,9 +97,9 @@ p{margin:0}
 .about .src{padding:0}
 .about .btn{align-self:flex-end}
 @media (min-width:1080px){
-  .brand{position:absolute; top:24px; left:16px; right:16px; height:50px; min-height:0; padding:0; z-index:21; pointer-events:none}
+  .brand{position:absolute; top:22px; left:16px; right:16px; height:54px; min-height:0; padding:0; z-index:21; pointer-events:none}
   .brand > *{pointer-events:auto}
-  .nav{padding-top:14px; margin-bottom:10px}
+  .nav{padding-top:14px; margin-bottom:22px}
 }
 
 /* grouped cells */
@@ -1572,7 +1573,7 @@ $('sheetToTrick').addEventListener('click',()=>{showTab('trick');window.scrollTo
     if(reduce.matches)return;
     timers.forEach(clearTimeout);timers=[];
     const seq=orders[order],T=(f,t)=>timers.push(setTimeout(f,t));
-    cap.textContent=ONAME[order]+': '+seq.map(i=>word[i]).join(' ');cap.classList.add('show');
+    cap.textContent=ONAME[order];cap.setAttribute('aria-label',ONAME[order]+': '+seq.map(i=>word[i]).join(' '));cap.classList.add('show');
     wm.classList.add('tree');cap.style.marginLeft=spread(L.length-1)+'px';L.forEach((l,i)=>{l.classList.remove('v');l.style.transform=`translate(${spread(i)}px,${depth[i]*drop()}px)`;});
     drawEdges();
     const place=i=>{const p=pos(i);dot.style.transform=`translate(${p.x}px,${p.y+5}px)`;};
