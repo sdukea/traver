@@ -207,6 +207,38 @@ tr + tr td, tbody tr td{box-shadow:inset 0 .5px 0 var(--sep)}
 th{font-size:13px; font-weight:600; color:var(--label-2)}
 code{font-family:var(--mono); font-size:13px; background:var(--fill); border-radius:6px; padding:1px 5px}
 .tag{display:inline-block; font-weight:600; font-size:13px; padding:2px 10px; border-radius:999px; background:var(--fill); white-space:nowrap}
+.sheet .cell{scroll-margin-top:84px}
+.jump{display:flex; flex-wrap:wrap; gap:8px}
+.jump a{font-size:14px; font-weight:600; color:var(--label); text-decoration:none; background:var(--cell); border-radius:999px; padding:8px 14px; min-height:36px; display:inline-flex; align-items:center}
+.jump a:hover{background:var(--fill-2)}
+.tag.pre{background:var(--c-pre); color:#fff} .tag.in{background:var(--c-in); color:#000} .tag.post{background:var(--c-post); color:#fff} .tag.lvl{background:var(--label); color:var(--cell)}
+.exgrid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:20px; align-items:center}
+.exsvg{background:var(--cell-2); border-radius:16px; padding:8px}
+.exsvg svg{display:block; width:100%; height:auto}
+.exsvg line{stroke:var(--label-3); stroke-width:2}
+.exsvg circle{fill:var(--cell); stroke:var(--sep)}
+.exsvg circle.root{fill:var(--yellow); stroke:var(--yellow)}
+.exsvg text{fill:var(--label); font:600 15px var(--font); text-anchor:middle; dominant-baseline:central}
+.exsvg circle.root + text{fill:var(--on-warm)}
+.exrows{display:flex; flex-direction:column; gap:10px}
+.exrow{display:grid; grid-template-columns:100px 1fr; gap:10px; align-items:center}
+.exrow .seqs{font:600 16px var(--mono); letter-spacing:.18em; white-space:nowrap; overflow-x:auto}
+.exrow .seqs b{background:var(--yellow); color:var(--on-warm); border-radius:4px; padding:0 2px}
+.exrow small{grid-column:2; font-size:12px; color:var(--label-2); margin-top:-6px}
+.snip{margin:0; background:var(--cell-2); border-radius:12px; padding:12px 14px; font:13px/1.6 var(--mono); overflow-x:auto; white-space:pre}
+.snip .cm{color:var(--label-2)} .snip .kw{color:var(--kw); font-weight:600}
+.snip .vp{color:var(--c-pre); font-weight:600} .snip .vi{color:var(--c-in); font-weight:600} .snip .vo{color:var(--c-post); font-weight:600}
+.snipcap{font-size:13px; font-weight:600; color:var(--label-2)}
+.nsteps{list-style:none; margin:0; padding:0!important; display:flex; flex-direction:column; gap:10px!important}
+.nsteps li{display:grid; grid-template-columns:26px 1fr; gap:10px; align-items:start}
+.nsteps li > b:first-child{width:26px; height:26px; border-radius:50%; background:var(--label); color:var(--cell); display:grid; place-items:center; font-size:13px}
+.traps{list-style:none; padding:0!important}
+.traps li{display:grid; grid-template-columns:22px 1fr; gap:8px}
+.traps li::before{content:"!"; width:20px; height:20px; border-radius:50%; background:var(--orange); color:var(--on-warm); font-weight:700; font-size:12px; display:grid; place-items:center; margin-top:1px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:8px 16px; font-size:15px; align-items:baseline}
+.kv b{font-variant-numeric:tabular-nums; white-space:nowrap}
+.kv span{color:var(--label-2); font-size:14px}
+@media (max-width:760px){ .exgrid{grid-template-columns:1fr} .exrow{grid-template-columns:84px 1fr} }
 
 /* the trick */
 .intro{display:flex; flex-direction:column; gap:4px}
@@ -530,92 +562,154 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
   <!-- ================= CHEAT SHEET ================= -->
   <section id="tab-sheet" hidden>
     <div class="sheet">
-      <div class="cell wide">
-        <h2>The four orders at a glance</h2>
+      <nav class="jump wide" aria-label="Cheat sheet sections">
+        <a href="#cs-glance">At a glance</a><a href="#cs-example">Example</a><a href="#cs-trick">Outline trick</a><a href="#cs-which">Which to use</a><a href="#cs-code">Code</a><a href="#cs-rebuild">Rebuild a tree</a><a href="#cs-cost">Complexity</a><a href="#cs-lists">Linked lists</a><a href="#cs-traps">Exam traps</a>
+      </nav>
+
+      <div class="cell wide" id="cs-glance">
+        <h2>At a glance</h2>
         <div class="tbl"><table>
-          <thead><tr><th>Order</th><th>Rule</th><th>Tool</th><th>Root is</th><th>Used for</th></tr></thead>
+          <thead><tr><th>Order</th><th>Rule</th><th>Root is</th><th>Outline dot</th><th>Uses</th></tr></thead>
           <tbody>
-            <tr><td><span class="tag">Pre-order</span></td><td><b>N</b> → L → R</td><td>Recursion (stack)</td><td>First</td><td>Copying or serialising a tree, prefix (Polish) notation, printing a folder hierarchy</td></tr>
-            <tr><td><span class="tag">In-order</span></td><td>L → <b>N</b> → R</td><td>Recursion (stack)</td><td>In the middle</td><td>Sorted output from a BST, infix expressions</td></tr>
-            <tr><td><span class="tag">Post-order</span></td><td>L → R → <b>N</b></td><td>Recursion (stack)</td><td>Last</td><td>Deleting or freeing a tree, postfix (RPN) evaluation, computing height or size</td></tr>
-            <tr><td><span class="tag">Level-order</span></td><td>Row by row, left to right</td><td>Queue (BFS)</td><td>First</td><td>Shortest path in an unweighted tree or graph, printing by level, finding width, storing a tree as an array</td></tr>
+            <tr><td><span class="tag pre">Pre-order</span></td><td><b>N</b> → L → R</td><td>First</td><td>Left side</td><td>Recursion (stack)</td></tr>
+            <tr><td><span class="tag in">In-order</span></td><td>L → <b>N</b> → R</td><td>Splits left from right</td><td>Underneath</td><td>Recursion (stack)</td></tr>
+            <tr><td><span class="tag post">Post-order</span></td><td>L → R → <b>N</b></td><td>Last</td><td>Right side</td><td>Recursion (stack)</td></tr>
+            <tr><td><span class="tag lvl">Level-order</span></td><td>Row by row, left to right</td><td>First</td><td>None</td><td>Queue (BFS)</td></tr>
           </tbody>
         </table></div>
-        <p class="sub">Pre, in and post are depth-first: they go as deep as possible before backing up. The prefix tells you where the <b>N</b>ode goes. Level-order is breadth-first: it finishes one whole level before starting the next.</p>
+        <p class="sub">The name tells you where the <b>N</b>ode goes: pre = before its children, in = between them, post = after them. Left always comes before right.</p>
       </div>
 
-      <div class="cell">
-        <h2>The flag trick for depth-first orders</h2>
-        <ol>
-          <li>Put a flag on every node: on the <b>left side</b> for pre-order, <b>underneath</b> for in-order, on the <b>right side</b> for post-order.</li>
-          <li>Start left of the root and trace around the outside of the tree anticlockwise, hugging every branch.</li>
-          <li>Write each node down the moment you pass its flag.</li>
+      <div class="cell wide" id="cs-example">
+        <h2>One tree, four orders</h2>
+        <div class="exgrid">
+          <div class="exsvg"><svg viewBox="0 0 460 230" role="img" aria-label="Example tree with root F"><line x1="280" y1="28" x2="80" y2="86"/><line x1="280" y1="28" x2="330" y2="86"/><line x1="80" y1="86" x2="30" y2="144"/><line x1="80" y1="86" x2="180" y2="144"/><line x1="180" y1="144" x2="130" y2="202"/><line x1="180" y1="144" x2="230" y2="202"/><line x1="330" y1="86" x2="430" y2="144"/><line x1="430" y1="144" x2="380" y2="202"/><circle cx="30" cy="144" r="18"/><text x="30" y="144">A</text><circle cx="80" cy="86" r="18"/><text x="80" y="86">B</text><circle cx="130" cy="202" r="18"/><text x="130" y="202">C</text><circle cx="180" cy="144" r="18"/><text x="180" y="144">D</text><circle cx="230" cy="202" r="18"/><text x="230" y="202">E</text><circle cx="280" cy="28" r="18" class="root"/><text x="280" y="28">F</text><circle cx="330" cy="86" r="18"/><text x="330" y="86">G</text><circle cx="380" cy="202" r="18"/><text x="380" y="202">H</text><circle cx="430" cy="144" r="18"/><text x="430" y="144">I</text></svg></div>
+          <div class="exrows">
+            <div class="exrow"><span class="tag pre">Pre-order</span><span class="seqs"><b>F</b> B A D C E G I H</span><small>Root first</small></div>
+            <div class="exrow"><span class="tag in">In-order</span><span class="seqs">A B C D E <b>F</b> G H I</span><small>Root splits left subtree | right subtree</small></div>
+            <div class="exrow"><span class="tag post">Post-order</span><span class="seqs">A C E D B H I G <b>F</b></span><small>Root last</small></div>
+            <div class="exrow"><span class="tag lvl">Level-order</span><span class="seqs"><b>F</b> B G A D I C E H</span><small>Row by row</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cell" id="cs-trick">
+        <h2>The outline trick</h2>
+        <ol class="nsteps">
+          <li><b>1</b><span><b>Complete the tree.</b> Add an empty edge wherever a child is missing, so every node has exactly two. A tree with n nodes needs <b>n + 1</b>.</span></li>
+          <li><b>2</b><span><b>Trace the outline.</b> Start above the root and go anticlockwise, hugging every node and edge.</span></li>
+          <li><b>3</b><span><b>Read it off.</b> Write a node as you pass its <span class="pre-c"><b>left</b></span> (pre), <span class="in-c"><b>underside</b></span> (in) or <span class="post-c"><b>right</b></span> (post).</span></li>
         </ol>
-        <p class="sub">For level-order, read the tree like a book instead: top row first, each row left to right.</p>
+        <div><button class="btn prominent" id="sheetToTrick">Open The Trick</button></div>
       </div>
 
-      <div class="cell">
-        <h2>Level-order step by step</h2>
-        <ol>
-          <li>Put the root in an empty queue.</li>
-          <li>While the queue isn’t empty, take the node at the front and visit it.</li>
-          <li>Add its left child, then its right child, to the back of the queue.</li>
+      <div class="cell" id="cs-which">
+        <h2>Which traversal for which job?</h2>
+        <div class="tbl"><table>
+          <tbody>
+            <tr><td>Print a BST in sorted order</td><td><span class="tag in">In</span></td></tr>
+            <tr><td>Copy or serialise a tree</td><td><span class="tag pre">Pre</span></td></tr>
+            <tr><td>Delete or free every node</td><td><span class="tag post">Post</span></td></tr>
+            <tr><td>Evaluate an expression tree</td><td><span class="tag post">Post</span></td></tr>
+            <tr><td>Height, size or sum of a tree</td><td><span class="tag post">Post</span></td></tr>
+            <tr><td>Print prefix notation</td><td><span class="tag pre">Pre</span></td></tr>
+            <tr><td>Minimum depth or shortest path</td><td><span class="tag lvl">Level</span></td></tr>
+            <tr><td>Print each level on its own line</td><td><span class="tag lvl">Level</span></td></tr>
+            <tr><td>Print a linked list backwards</td><td><span class="tag post">Post</span></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="cell wide" id="cs-code">
+        <h2>Code you should be able to write</h2>
+        <div class="exgrid" style="align-items:start">
+          <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
+            <span class="snipcap">One template, three orders: only the visit moves</span>
+<pre class="snip"><span class="kw">def</span> dfs(node):
+    <span class="kw">if</span> node <span class="kw">is None</span>:
+        <span class="kw">return</span>
+    <span class="vp">visit(node)   # pre-order goes here</span>
+    dfs(node.left)
+    <span class="vi">visit(node)   # in-order goes here</span>
+    dfs(node.right)
+    <span class="vo">visit(node)   # post-order goes here</span></pre>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
+            <span class="snipcap">In-order without recursion (explicit stack)</span>
+<pre class="snip"><span class="kw">def</span> inorder(root):
+    stack, node = [], root
+    <span class="kw">while</span> stack <span class="kw">or</span> node:
+        <span class="kw">while</span> node:              <span class="cm"># go as far left as possible</span>
+            stack.append(node)
+            node = node.left
+        node = stack.pop()
+        visit(node)
+        node = node.right</pre>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
+            <span class="snipcap">Level-order (queue)</span>
+<pre class="snip"><span class="kw">def</span> levelorder(root):
+    queue = deque([root])
+    <span class="kw">while</span> queue:
+        node = queue.popleft()
+        visit(node)
+        <span class="kw">if</span> node.left:  queue.append(node.left)
+        <span class="kw">if</span> node.right: queue.append(node.right)</pre>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
+            <span class="snipcap">Pre-order without recursion</span>
+<pre class="snip"><span class="kw">def</span> preorder(root):
+    stack = [root]
+    <span class="kw">while</span> stack:
+        node = stack.pop()
+        visit(node)
+        <span class="kw">if</span> node.right: stack.append(node.right)  <span class="cm"># right first,</span>
+        <span class="kw">if</span> node.left:  stack.append(node.left)   <span class="cm"># so left pops first</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="cell" id="cs-rebuild">
+        <h2>Rebuild a tree from two orders</h2>
+        <p class="sub">Pre + In, Post + In or Level + In gives exactly one tree. Pre + Post does not, unless every node has 0 or 2 children.</p>
+        <ol class="nsteps">
+          <li><b>1</b><span>Pre <code>F B A D C E G I H</code>, so the root is <b>F</b>.</span></li>
+          <li><b>2</b><span>Split in-order at F: <code>A B C D E</code> | F | <code>G H I</code>.</span></li>
+          <li><b>3</b><span>The left part’s first value in pre-order is <b>B</b>, so B is the left child. Split again: <code>A</code> | B | <code>C D E</code>.</span></li>
+          <li><b>4</b><span>Repeat on every part until each one is a single node.</span></li>
         </ol>
-        <p class="sub">Using a stack here instead of a queue gives you a depth-first order. Swapping the data structure is a common exam trick.</p>
       </div>
 
-      <div class="cell">
-        <h2>Linked lists</h2>
-        <ul>
-          <li>A singly linked list is a binary tree where every node has <b>only a right child</b> (<code>next</code>).</li>
-          <li><b>Pre-order</b>, <b>in-order</b> and <b>level-order</b> all print head → tail. Each level holds exactly one node, and there are no left children.</li>
-          <li><b>Post-order</b> prints <b>tail → head</b>. This is the classic “print a list in reverse with recursion” question.</li>
-          <li>Recursion on a list is n calls deep, so it uses O(n) stack space and can overflow. A loop needs only O(1).</li>
-        </ul>
-      </div>
-
-      <div class="cell">
+      <div class="cell" id="cs-cost">
         <h2>Complexity and counts</h2>
-        <ul>
-          <li>Time is <b>O(n)</b> for all four. Each node is visited once.</li>
-          <li>Depth-first space is <b>O(h)</b>: O(log n) when balanced, O(n) when skewed.</li>
-          <li>Level-order space is <b>O(w)</b>, where w is the widest level. That can reach about n/2 in a complete tree.</li>
-          <li>A tree with n nodes has <b>n + 1 null pointers</b>, so recursive versions make <b>2n + 1 calls</b>.</li>
-        </ul>
+        <div class="kv">
+          <b>O(n)</b><span>Time for all four orders. Each node is visited once.</span>
+          <b>O(h)</b><span>Space for recursion, where h is the height: log n when balanced, n when skewed.</span>
+          <b>O(w)</b><span>Space for level-order, where w is the widest level (up to about n/2).</span>
+          <b>n + 1</b><span>Null pointers in any binary tree with n nodes.</span>
+          <b>2n + 1</b><span>Total calls made by a recursive traversal.</span>
+        </div>
       </div>
 
-      <div class="cell">
-        <h2>Rebuilding a tree</h2>
-        <ul>
-          <li><b>Pre + In</b>, <b>Post + In</b> or <b>Level + In</b> gives exactly one tree (when values are distinct).</li>
-          <li><b>Pre + Post</b> on its own is <b>not</b> enough unless every node has 0 or 2 children.</li>
-          <li>The root is the first value in pre-order or the last value in post-order. Find it in the in-order list: values to its left form the left subtree, and values to its right form the right subtree. Repeat on each side.</li>
-        </ul>
+      <div class="cell" id="cs-lists">
+        <h2>Linked lists</h2>
+        <p class="sub">A singly linked list is a tree where every node has only a right child, <code>next</code>.</p>
+        <div class="kv">
+          <b>Head → tail</b><span>Pre-order, in-order and level-order</span>
+          <b>Tail → head</b><span>Post-order (recurse first, then print)</span>
+          <b>O(n) stack</b><span>Recursion on a long list can overflow. A loop needs only O(1).</span>
+        </div>
       </div>
 
-      <div class="cell">
-        <h2>Quick checks</h2>
-        <ul>
-          <li>Pre-order and level-order both start with the root. Post-order ends with it.</li>
-          <li>In all three depth-first orders, leaves appear in the same left-to-right order.</li>
-          <li>In-order on a BST must come out sorted.</li>
-          <li>A missing child is still a step in recursion: you go there, find null, and come back.</li>
-          <li>Reversing post-order gives N → R → L, which is not pre-order.</li>
+      <div class="cell" id="cs-traps">
+        <h2>Exam traps</h2>
+        <ul class="traps">
+          <li><span>A node with <b>one child</b> still gets an empty edge. Skipping it is the most common in-order mistake.</span></li>
+          <li><span>Reversed post-order is N → R → L, <b>not</b> pre-order.</span></li>
+          <li><span>In-order on a BST must come out sorted. If it doesn’t, recheck your answer.</span></li>
+          <li><span>Leaves appear in the same left-to-right order in pre, in and post. Use this to check your answer.</span></li>
+          <li><span>Swapping the queue in level-order for a stack gives a depth-first order.</span></li>
         </ul>
-      </div>
-
-      <div class="cell wide">
-        <h2>Worked example: <code>(a + b) * c − d</code></h2>
-        <div class="tbl"><table>
-          <thead><tr><th>Traversal</th><th>Output</th><th>Notes</th></tr></thead>
-          <tbody>
-            <tr><td>Pre-order</td><td><code>− * + a b c d</code></td><td>Prefix (Polish) notation</td></tr>
-            <tr><td>In-order</td><td><code>a + b * c − d</code></td><td>Infix. Brackets are needed to keep the meaning.</td></tr>
-            <tr><td>Post-order</td><td><code>a b + c * d −</code></td><td>Postfix (Reverse Polish). A stack evaluates it directly.</td></tr>
-            <tr><td>Level-order</td><td><code>− * d + c a b</code></td><td>Row by row. Has no meaning as an expression.</td></tr>
-          </tbody>
-        </table></div>
-        <p class="sub">Try it under Visualise → Example → Expression tree.</p>
       </div>
     </div>
   </section>
@@ -1246,6 +1340,8 @@ $('tPlay').addEventListener('click',()=>T.playing?trickStop():trickPlay(null));
 $('tNext').addEventListener('click',()=>{const nx=trickStops().find(x=>x>T.d+0.5);trickPlay(nx==null?T.total:nx);});
 $('tPrev').addEventListener('click',()=>{trickStop();const pv=trickStops().filter(x=>x<T.d-0.5);T.d=pv.length?pv[pv.length-1]:0;trickRender();});
 $('tReset').addEventListener('click',()=>{trickStop();T.d=0;trickRender();});
+
+$('sheetToTrick').addEventListener('click',()=>{showTab('trick');window.scrollTo({top:0,behavior:'smooth'});});
 
 /* ---------- boot ---------- */
 fillPresets();setDataLabel();$('dataIn').value=PRESETS.tree[0][1];loadData($('dataIn').value);renderStats();
