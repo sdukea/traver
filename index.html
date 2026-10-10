@@ -1,0 +1,1254 @@
+<title>Traversal Lab</title>
+<style>
+/* Layout: Apple grouped-list ground; floating glass nav on top, floating glass player at the bottom, content in borderless grouped cells */
+:root{
+  --bg:#f2f2f7; --cell:#ffffff; --cell-2:#f2f2f7; --fill:rgba(120,120,128,.12); --fill-2:rgba(120,120,128,.20);
+  --label:#000000; --label-2:rgba(60,60,67,.60); --label-3:rgba(60,60,67,.30); --sep:rgba(60,60,67,.29);
+  --tint:#0088ff; --on-tint:#ffffff; --yellow:#ffcc00; --orange:#ff8d28; --green:#34c759; --red:#ff383c; --on-warm:#000000;
+  --seg-on:#ffffff; --glass:rgba(255,255,255,.62); --glass-rim:rgba(255,255,255,.6); --shadow:rgba(0,0,0,.10);
+  --kw:#ad3da4; --c-pre:#0088ff; --c-in:#ff8d28; --c-post:#cb30e0; --hl-line:rgba(255,204,0,.32);
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, "Helvetica Neue", Arial, sans-serif;
+  --mono:ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --ease:cubic-bezier(0.28, 0.11, 0.32, 1);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#000000; --cell:#1c1c1e; --cell-2:#2c2c2e; --fill:rgba(120,120,128,.24); --fill-2:rgba(120,120,128,.36);
+  --label:#f5f5f7; --label-2:rgba(235,235,245,.60); --label-3:rgba(235,235,245,.30); --sep:rgba(84,84,88,.60);
+  --tint:#0091ff; --on-tint:#ffffff; --yellow:#ffd600; --orange:#ff9230; --green:#30d158; --red:#ff4245; --on-warm:#000000;
+  --seg-on:#636366; --glass:rgba(30,30,32,.62); --glass-rim:rgba(255,255,255,.12); --shadow:rgba(0,0,0,.45);
+  --kw:#ff7ab2; --c-pre:#0091ff; --c-in:#ff9230; --c-post:#db34f2; --hl-line:rgba(255,214,0,.22); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#000000; --cell:#1c1c1e; --cell-2:#2c2c2e; --fill:rgba(120,120,128,.24); --fill-2:rgba(120,120,128,.36);
+  --label:#f5f5f7; --label-2:rgba(235,235,245,.60); --label-3:rgba(235,235,245,.30); --sep:rgba(84,84,88,.60);
+  --tint:#0091ff; --on-tint:#ffffff; --yellow:#ffd600; --orange:#ff9230; --green:#30d158; --red:#ff4245; --on-warm:#000000;
+  --seg-on:#636366; --glass:rgba(30,30,32,.62); --glass-rim:rgba(255,255,255,.12); --shadow:rgba(0,0,0,.45);
+  --kw:#ff7ab2; --c-pre:#0091ff; --c-in:#ff9230; --c-post:#db34f2; --hl-line:rgba(255,214,0,.22); color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg); color:var(--label); font-family:var(--font); font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased; letter-spacing:-.003em}
+button,select,input{font:inherit; color:inherit; letter-spacing:inherit}
+:focus-visible{outline:3px solid color-mix(in srgb, var(--tint) 55%, transparent); outline-offset:2px}
+h1,h2,h3{margin:0; text-wrap:balance}
+p{margin:0}
+
+.page{max-width:1360px; margin:0 auto; padding-inline:16px; padding-block:0 128px; display:flex; flex-direction:column; gap:20px}
+
+/* floating glass nav */
+.nav{position:sticky; top:calc(env(safe-area-inset-top, 0px) + 10px); z-index:20; display:flex; justify-content:center; padding-top:10px}
+.glass{background:var(--glass); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+  box-shadow:0 8px 32px var(--shadow), inset 0 1px 0 var(--glass-rim), inset 0 0 0 .5px var(--glass-rim)}
+.tabs{display:flex; gap:2px; padding:5px; border-radius:999px}
+.tabs button{border:0; background:none; min-height:40px; padding:0 18px; border-radius:999px; cursor:pointer; font-weight:600; font-size:15px; color:var(--label-2); white-space:nowrap; transition:background .25s var(--ease), color .25s var(--ease)}
+.tabs button[aria-selected="true"]{background:var(--fill-2); color:var(--label)}
+
+.hero{display:flex; flex-direction:column; gap:6px; padding-top:8px}
+.hero h1{font-size:clamp(30px,5vw,40px); font-weight:700; letter-spacing:-.022em; line-height:1.08}
+.hero p{font-size:17px; color:var(--label-2); max-width:62ch}
+
+/* grouped cells */
+.cell{background:var(--cell); border-radius:22px}
+.cap{font-size:13px; color:var(--label-2); padding-inline:4px}
+.field{display:flex; flex-direction:column; gap:6px; min-width:0}
+.controls{display:flex; flex-wrap:wrap; gap:14px 20px; align-items:flex-end}
+
+/* segmented control */
+.seg{display:inline-flex; background:var(--fill); border-radius:10px; padding:2px; gap:2px; max-width:100%; overflow-x:auto}
+.seg button{border:0; background:none; min-height:32px; padding:0 14px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:500; color:var(--label); white-space:nowrap; transition:background .2s var(--ease)}
+.seg button[aria-pressed="true"]{background:var(--seg-on); font-weight:600; box-shadow:0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04)}
+
+/* buttons */
+.btn{border:0; min-height:44px; padding:0 18px; border-radius:999px; cursor:pointer; font-weight:600; font-size:15px; background:var(--fill); color:var(--tint); transition:opacity .2s var(--ease), transform .2s var(--ease); white-space:nowrap}
+.btn:active,.icon:active{opacity:.75; transform:scale(.97)}
+.btn.prominent{background:var(--tint); color:var(--on-tint)}
+.btn.plain{background:none; padding:0 10px}
+select,.txt{border:0; background:var(--fill); border-radius:10px; min-height:44px; padding:0 12px; font-size:15px}
+select{padding-right:32px; appearance:none; -webkit-appearance:none; cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--label-2) 50%),linear-gradient(135deg,var(--label-2) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-size:5px 5px; background-repeat:no-repeat}
+.txt{font-family:var(--mono); font-size:14px; width:100%; min-width:0}
+.txt::placeholder{color:var(--label-3)}
+.err{color:var(--red); font-size:13px; padding-inline:4px}
+.err:empty{display:none}
+.datarow{display:flex; gap:8px; align-items:center}
+.datarow .txt{flex:1}
+
+/* stage */
+.stage{padding:18px; display:flex; flex-direction:column; gap:14px}
+.narr{display:flex; flex-direction:column; gap:2px}
+.narr .eyebrow{font-size:13px; color:var(--label-2); font-variant-numeric:tabular-nums}
+.narr p{font-size:18px; font-weight:600; line-height:1.3; letter-spacing:-.01em; min-height:2.6em}
+.canvas{background:var(--cell-2); border-radius:16px; overflow-x:auto}
+.canvas svg{display:block; margin:0 auto; width:100%; height:auto}
+.legend{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--label-2)}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:14px; height:14px; border-radius:50%; display:inline-block}
+.l-cur{background:var(--yellow)} .l-wait{border:2px dashed var(--label)} .l-vis{background:var(--label)} .l-num{background:var(--orange); width:10px!important; height:10px!important}
+
+/* settings-style rows */
+.rows{display:flex; flex-direction:column; background:var(--cell); border-radius:22px; overflow:hidden}
+.rowi{display:flex; align-items:center; gap:12px; min-height:52px; padding:8px 18px}
+.rowi + .rowi{box-shadow:inset 0 .5px 0 var(--sep)}
+.rowi .t{flex:1; min-width:0}
+.rowi .t b{display:block; font-weight:400; font-size:16px}
+.rowi .t small{display:block; color:var(--label-2); font-size:13px}
+.rowi.dis{opacity:.45}
+.switch{appearance:none; -webkit-appearance:none; width:51px; height:31px; border-radius:999px; background:var(--fill-2); position:relative; cursor:pointer; flex:none; transition:background .25s var(--ease); margin:0}
+.switch::after{content:""; position:absolute; top:2px; left:2px; width:27px; height:27px; border-radius:50%; background:#fff; box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06); transition:transform .25s var(--ease)}
+.switch:checked{background:var(--green)}
+.switch:checked::after{transform:translateX(20px)}
+.switch:disabled{cursor:default}
+.slider{width:140px; accent-color:var(--tint)}
+
+/* floating player */
+.player{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom, 0px) + 16px); z-index:30;
+  width:min(640px, calc(100% - 32px)); display:flex; align-items:center; gap:4px; padding:6px 14px 6px 6px; border-radius:999px}
+.icon{border:0; background:none; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; cursor:pointer; color:var(--label); flex:none; transition:opacity .2s var(--ease), transform .2s var(--ease)}
+.icon svg{width:20px; height:20px; fill:currentColor}
+.icon.play{background:var(--tint); color:var(--on-tint)}
+.icon.play svg{width:22px; height:22px}
+.scrub{flex:1; min-width:60px; accent-color:var(--label); margin-left:8px}
+.player .count{font-size:13px; color:var(--label-2); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:58px; text-align:right}
+
+/* svg */
+.n .body{fill:var(--cell); stroke:var(--sep); stroke-width:1; transition:fill .3s var(--ease), stroke .3s var(--ease)}
+.n{filter:drop-shadow(0 1px 2px rgba(0,0,0,.10))}
+.n text.val{fill:var(--label); font:600 16px var(--font); text-anchor:middle; dominant-baseline:central; pointer-events:none}
+.n .divider{stroke:var(--sep); stroke-width:1}
+.n .nextdot{fill:var(--label-2)}
+.n .ring{fill:none; stroke:var(--label); stroke-width:1.75; stroke-dasharray:4 3; opacity:0; transition:opacity .3s var(--ease)}
+.n.stk .ring{opacity:1}
+.n.vis .body{fill:var(--label); stroke:var(--label)}
+.n.vis text.val{fill:var(--cell)} .n.vis .divider{stroke:var(--cell)} .n.vis .nextdot{fill:var(--cell)}
+.n.cur .body{fill:var(--yellow); stroke:var(--yellow); stroke-dasharray:none}
+.n.cur text.val{fill:var(--on-warm)} .n.cur .divider{stroke:rgba(0,0,0,.25)} .n.cur .nextdot{fill:var(--on-warm)}
+.n.wrong .body{fill:var(--red); stroke:var(--red)} .n.wrong text.val{fill:#fff}
+.n.wrong{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.n .badge{opacity:0; transition:opacity .2s}
+.n.vis .badge,.n.cur.vis .badge{opacity:1}
+.badge circle{fill:var(--orange)} .badge text{fill:var(--on-warm); font:700 10px var(--font); text-anchor:middle; dominant-baseline:central}
+.pick .n{cursor:pointer} .pick .n:hover .body{stroke:var(--tint); stroke-width:2.5; stroke-dasharray:none}
+.edge{stroke:var(--label-3); stroke-width:2; fill:none; transition:stroke .3s var(--ease)}
+.edge.hot{stroke:var(--label); stroke-width:2.5}
+.arrhead{fill:var(--label-3)} .arrhead.hot{fill:var(--label)}
+.nullterm{font:600 13px var(--mono); fill:var(--label-2)}
+.nullterm.on{fill:var(--label); text-decoration:underline}
+.ghost circle{fill:var(--cell); stroke:var(--label-2); stroke-width:1.5; stroke-dasharray:3 3}
+.ghost text{fill:var(--label-2); font:600 13px var(--font); text-anchor:middle; dominant-baseline:central}
+.ghost line{stroke:var(--label-2); stroke-width:1.5; stroke-dasharray:4 3}
+.pointer{transition:transform .35s var(--ease)}
+.pointer text{font:600 11px var(--font); fill:var(--label-2); text-anchor:middle}
+.pointer path{fill:var(--label-2)}
+.flag{fill:var(--cell); stroke:var(--orange); stroke-width:2}
+.flag.got{fill:var(--orange)}
+.lvl line{stroke:var(--label-3); stroke-width:1; stroke-dasharray:2 4}
+.lvl text{fill:var(--label-2); font:600 11px var(--font)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} .n.wrong{animation:none} }
+
+/* panels */
+.workspace{display:grid; grid-template-columns:minmax(0,1.6fr) minmax(320px,1fr); gap:16px; align-items:start}
+.workspace .stage{position:sticky; top:calc(env(safe-area-inset-top, 0px) + 74px)}
+.panels{display:flex; flex-direction:column; gap:12px; min-width:0}
+.panel{padding:14px 16px; display:flex; flex-direction:column; gap:10px; min-width:0}
+.panel h3{font-size:17px; font-weight:600; display:flex; justify-content:space-between; align-items:baseline; gap:8px}
+.panel h3 span{font-size:13px; font-weight:400; color:var(--label-2)}
+.code{background:var(--cell-2); border-radius:12px; padding:8px 0; font:12.5px/1.6 var(--mono); overflow-x:auto}
+.code .ln{padding:0 14px 0 10px; white-space:pre; transition:background .2s var(--ease)}
+.code .ln b{display:inline-block; width:2ch; color:var(--label-3); font-weight:400; margin-right:12px; text-align:right}
+.code .ln.on{background:var(--hl-line)}
+.code .kw{color:var(--kw); font-weight:600} .code .cm{color:var(--label-2)}
+.stack{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; border-radius:12px; overflow:hidden; background:var(--cell-2); font:13px var(--mono)}
+.stack li{padding:6px 12px; display:flex; justify-content:space-between; gap:8px}
+.stack li + li{box-shadow:inset 0 .5px 0 var(--sep)}
+.stack li:first-child:not(.empty){background:var(--hl-line); font-weight:600}
+.stack li span{color:var(--label-2); font:12px var(--font)}
+.stack li.empty{color:var(--label-2); font:italic 13px var(--font)}
+.chips{display:flex; flex-wrap:wrap; gap:8px; min-height:36px; align-content:flex-start}
+.chip{min-width:36px; height:36px; padding:0 10px; border-radius:10px; background:var(--label); color:var(--cell); display:grid; place-items:center; font-weight:600; font-size:15px; position:relative}
+.chip small{position:absolute; top:-6px; right:-6px; font:700 10px var(--font); background:var(--orange); color:var(--on-warm); border-radius:999px; min-width:17px; height:17px; display:grid; place-items:center; padding:0 4px}
+.chip.ghosty{background:var(--fill); color:var(--label-3)}
+.insight{font-size:14px; color:var(--label-2); line-height:1.5}
+.insight strong{color:var(--label)}
+
+/* practice */
+.pgrid{display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start}
+.qcard{padding:20px; display:flex; flex-direction:column; gap:14px}
+.qtext{font-size:22px; font-weight:700; letter-spacing:-.015em; line-height:1.25}
+.qtext em{font-style:normal; color:var(--orange)}
+.seq{font:600 15px var(--mono); background:var(--cell-2); border-radius:12px; padding:10px 14px; overflow-x:auto; white-space:nowrap}
+.seq span{color:var(--label-2); font:400 13px var(--font); margin-right:12px}
+.feedback{font-weight:600; font-size:15px}
+.feedback:empty{display:none}
+.feedback.ok{color:var(--green)} .feedback.bad{color:var(--red)}
+.choices{display:flex; flex-wrap:wrap; gap:8px}
+.choices .btn{color:var(--label)}
+.choices .btn.right{background:var(--green); color:#fff}
+.choices .btn.wrongc{background:var(--red); color:#fff}
+.actions{display:flex; flex-wrap:wrap; gap:8px}
+.side{display:flex; flex-direction:column; gap:16px}
+.rowi .v{font-size:17px; font-weight:600; font-variant-numeric:tabular-nums}
+.tip{padding:18px; display:flex; flex-direction:column; gap:8px; font-size:14px; color:var(--label-2)}
+.tip h3{font-size:17px; font-weight:600; color:var(--label)}
+
+/* cheat sheet */
+.sheet{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
+.sheet .cell{padding:20px 22px; display:flex; flex-direction:column; gap:12px; min-width:0}
+.sheet .wide{grid-column:1/-1}
+.sheet h2{font-size:22px; font-weight:700; letter-spacing:-.01em}
+.sheet p,.sheet li{max-width:70ch; font-size:15px}
+.sheet .sub{color:var(--label-2); font-size:14px}
+.sheet ul,.sheet ol{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse; width:100%; font-size:14px}
+th,td{text-align:left; padding:10px 12px 10px 0; vertical-align:top}
+tr + tr td, tbody tr td{box-shadow:inset 0 .5px 0 var(--sep)}
+th{font-size:13px; font-weight:600; color:var(--label-2)}
+code{font-family:var(--mono); font-size:13px; background:var(--fill); border-radius:6px; padding:1px 5px}
+.tag{display:inline-block; font-weight:600; font-size:13px; padding:2px 10px; border-radius:999px; background:var(--fill); white-space:nowrap}
+
+/* the trick */
+.intro{display:flex; flex-direction:column; gap:4px}
+.intro h2{font-size:28px; font-weight:700; letter-spacing:-.018em}
+.intro p{font-size:17px; color:var(--label-2)}
+.steps{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px}
+.steps li{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:var(--label-3); padding:6px 12px 6px 6px; border-radius:999px; background:var(--fill); transition:color .25s var(--ease), background .25s var(--ease)}
+.steps li b{width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px; background:var(--fill-2); color:var(--label-2)}
+.steps li.on{color:var(--label); background:var(--hl-line)}
+.steps li.on b{background:var(--label); color:var(--cell)}
+.steps li.done{color:var(--label-2)}
+.steps li.done b{background:var(--green); color:#fff}
+.tnarr{font-size:18px; font-weight:600; line-height:1.3; letter-spacing:-.01em; min-height:2.6em}
+.keyrow{display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--label-2)}
+.keyrow span{display:inline-flex; align-items:center; gap:7px}
+.keyrow svg{width:22px; height:22px}
+.keyrow i{width:16px; border-top:2px dashed var(--label-2); display:inline-block}
+.pre-c{color:var(--c-pre)} .in-c{color:var(--c-in)} .post-c{color:var(--c-post)}
+.tcontrols{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+.tcontrols .slider{margin-left:auto}
+.tcontrols .icon{background:var(--fill)}
+.tcontrols .icon.play{background:var(--tint)}
+.tn circle{fill:var(--cell); stroke:var(--sep); stroke-width:1; transition:fill .25s var(--ease)}
+.tn text{fill:var(--label); font:600 16px var(--font); text-anchor:middle; dominant-baseline:central}
+.tn.cur circle{fill:var(--yellow); stroke:var(--yellow)} .tn.cur text{fill:var(--on-warm)}
+.tedge{stroke:var(--label-3); stroke-width:2}
+.tstub{stroke:var(--label-2); stroke-width:2; stroke-dasharray:4 3; stroke-linecap:round}
+.tguide{fill:none; stroke:var(--label-3); stroke-width:1.5; stroke-dasharray:2 5; stroke-linecap:round; transition:opacity .4s var(--ease)}
+.ttrace{fill:none; stroke:var(--label); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round}
+.tdot{fill:var(--cell); stroke-width:2.5; transition:fill .2s var(--ease)}
+.tdot.pre{stroke:var(--c-pre)} .tdot.in{stroke:var(--c-in)} .tdot.post{stroke:var(--c-post)}
+.tdot.pre.got{fill:var(--c-pre)} .tdot.in.got{fill:var(--c-in)} .tdot.post.got{fill:var(--c-post)}
+.tpen{fill:var(--label); stroke:var(--cell); stroke-width:3}
+.orows{display:flex; flex-direction:column; gap:12px}
+.orow{display:flex; flex-direction:column; gap:6px; transition:opacity .25s var(--ease)}
+.orow.dim{opacity:.3}
+.okey{font-size:13px; font-weight:600; display:flex; align-items:center; gap:7px}
+.okey i{width:10px; height:10px; border-radius:50%; display:inline-block}
+.orow .chips{min-height:32px}
+.orow .chip{height:32px; min-width:32px; font-size:14px}
+.orow .chip.pre{background:var(--c-pre); color:#fff} .orow .chip.in{background:var(--c-in); color:#000} .orow .chip.post{background:var(--c-post); color:#fff}
+.orow .chip.new{box-shadow:0 0 0 3px var(--cell), 0 0 0 5px var(--label)}
+.more{padding:0}
+.more summary{list-style:none; cursor:pointer; padding:14px 16px; font-size:17px; font-weight:600; display:flex; justify-content:space-between; align-items:center; min-height:44px}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:"›"; font-size:22px; color:var(--label-3); transition:transform .25s var(--ease)}
+.more[open] summary::after{transform:rotate(90deg)}
+.more .body{padding:0 16px 16px; display:flex; flex-direction:column; gap:10px; font-size:14px; color:var(--label-2)}
+.more ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px}
+.more b{color:var(--label)}
+.src{font-size:13px; color:var(--label-2); padding-inline:4px}
+.src a{color:var(--tint); text-decoration:none}
+.src a:hover{text-decoration:underline}
+.tnull{fill:var(--cell); stroke:var(--label-2); stroke-width:1.5; transition:opacity .25s var(--ease)}
+.tnull-new{stroke:var(--orange); stroke-width:2}
+.tstub.new{stroke:var(--orange)}
+#trickSvg.pick .tn{cursor:pointer}
+#trickSvg.pick .tn:hover circle{stroke:var(--tint); stroke-width:2.5}
+.tn.wrong circle{fill:var(--red); stroke:var(--red)} .tn.wrong text{fill:#fff}
+.tn.wrong{animation:shake .35s}
+.tn.full circle{stroke:var(--green); stroke-width:2.5}
+.why1{padding:16px; display:flex; flex-direction:column; gap:10px; border:2px solid var(--orange)}
+.why1 h3{font-size:17px; font-weight:600; display:flex; align-items:center; gap:8px}
+.why1 h3 b{width:22px; height:22px; border-radius:50%; background:var(--orange); color:var(--on-warm); display:grid; place-items:center; font-size:12px}
+.why1 p{font-size:14px; color:var(--label-2)}
+.why1 p strong{color:var(--label)}
+.fact{display:flex; align-items:baseline; gap:10px; background:var(--cell-2); border-radius:12px; padding:10px 12px}
+.fact b{font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+.fact span{font-size:13px; color:var(--label-2)}
+.pbar{display:flex; flex-direction:column; gap:10px}
+.pbar .row2{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.pbar .tally{margin-left:auto; font-size:13px; color:var(--label-2); font-variant-numeric:tabular-nums}
+.tprompt em{font-style:normal}
+
+@media (max-width:1040px){
+  .workspace{grid-template-columns:1fr}
+  .workspace .stage{position:static}
+  .panels{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr) minmax(0,1fr); gap:16px; align-items:start}
+}
+@media (max-width:900px){
+  .rules{grid-template-columns:1fr}
+  .panels{grid-template-columns:1fr}
+  .pgrid{grid-template-columns:1fr}
+  .sheet{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .tabs button{padding:0 13px; font-size:14px}
+  .controls > .field{flex:1 1 100%}
+  .seg{display:flex; width:100%}
+  .seg button{flex:1; padding:0 6px; font-size:13px}
+  .datarow{flex-wrap:wrap}
+  .datarow .txt{flex:1 1 100%}
+  .player .count{display:none}
+  .narr p{font-size:17px}
+  .stage{padding:14px}
+}
+</style>
+
+<div class="page">
+  <div class="nav">
+    <nav class="tabs glass" role="tablist">
+      <button role="tab" id="t-viz" aria-selected="true" data-tab="viz">Visualise</button>
+      <button role="tab" id="t-trick" aria-selected="false" data-tab="trick">The Trick</button>
+      <button role="tab" id="t-practice" aria-selected="false" data-tab="practice">Practice</button>
+      <button role="tab" id="t-sheet" aria-selected="false" data-tab="sheet">Cheat Sheet</button>
+    </nav>
+  </div>
+
+  <header class="hero">
+    <h1>Traversal Lab</h1>
+    <p>Watch pre-order, in-order, post-order and level-order run one step at a time on binary trees and linked lists. Then practise the questions exams ask.</p>
+  </header>
+
+  <!-- ================= VISUALISE ================= -->
+  <section id="tab-viz" style="display:flex; flex-direction:column; gap:20px">
+    <div class="controls">
+      <div class="field"><span class="cap">Structure</span>
+        <div class="seg" id="segMode">
+          <button data-v="tree" aria-pressed="true">Binary Tree</button>
+          <button data-v="list" aria-pressed="false">Linked List</button>
+        </div>
+      </div>
+      <div class="field"><span class="cap">Traversal</span>
+        <div class="seg" id="segOrder">
+          <button data-v="pre" aria-pressed="true">Pre-order</button>
+          <button data-v="in" aria-pressed="false">In-order</button>
+          <button data-v="post" aria-pressed="false">Post-order</button>
+          <button data-v="level" aria-pressed="false">Level-order</button>
+        </div>
+      </div>
+      <div class="field"><label class="cap" for="lang">Code</label>
+        <select id="lang"><option value="py">Python</option><option value="java">Java</option><option value="cpp">C++</option></select>
+      </div>
+      <div class="field"><label class="cap" for="preset">Example</label>
+        <select id="preset"></select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="cap" for="dataIn" id="dataLbl">Tree values in level order. Use null for an empty spot.</label>
+      <div class="datarow">
+        <input class="txt" id="dataIn" spellcheck="false" autocomplete="off">
+        <button class="btn" id="applyBtn">Build</button>
+        <button class="btn plain" id="randBtn">Random</button>
+      </div>
+      <div class="err" id="dataErr" role="status"></div>
+    </div>
+
+    <div class="workspace">
+      <div class="cell stage">
+        <div class="narr"><span class="eyebrow" id="count"></span><p id="narr" aria-live="polite"></p></div>
+        <div class="canvas"><svg id="vizSvg" role="img" aria-label="Traversal diagram"></svg></div>
+        <div class="legend">
+          <span><i class="l-cur"></i>Current node</span>
+          <span><i class="l-wait"></i><em id="waitLbl" style="font-style:normal">Waiting on the call stack</em></span>
+          <span><i class="l-vis"></i>Visited</span>
+          <span><i class="l-num"></i>Output position</span>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="cell panel">
+          <h3>Code <span id="codeName"></span></h3>
+          <div class="code" id="code"></div>
+        </div>
+        <div class="cell panel">
+          <h3><em id="stackTitle" style="font-style:normal">Call Stack</em> <span id="depth"></span></h3>
+          <ul class="stack" id="stack"></ul>
+        </div>
+        <div class="cell panel">
+          <h3>Output <span id="outName"></span></h3>
+          <div class="chips" id="out"></div>
+          <p class="insight" id="insight"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rows">
+      <label class="rowi" id="rowNull"><span class="t"><b>Show Null Calls</b><small>Step into empty children as well, as the real recursion does.</small></span><input type="checkbox" class="switch" id="optNull" checked></label>
+      <label class="rowi" id="rowFlags"><span class="t"><b>Exam Flag Trick</b><small id="flagSub">Puts a dot on each node. Write the node down when you trace past its dot.</small></span><input type="checkbox" class="switch" id="optFlags"></label>
+      <div class="rowi"><span class="t"><b>Speed</b></span><input type="range" class="slider" id="speed" min="0" max="100" value="55" aria-label="Speed"></div>
+    </div>
+
+    <div class="player glass" role="toolbar" aria-label="Playback">
+      <button class="icon" id="bReset" title="Restart (Home)" aria-label="Restart"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
+      <button class="icon" id="bBack" title="Step back (←)" aria-label="Step back"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM19 5v14L9 12z"/></svg></button>
+      <button class="icon play" id="bPlay" title="Play or pause (Space)" aria-label="Play"><svg viewBox="0 0 24 24" id="playIco"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="icon" id="bFwd" title="Step forward (→)" aria-label="Step forward"><svg viewBox="0 0 24 24"><path d="M5 5v14l10-7zM16 5h2v14h-2z"/></svg></button>
+      <input type="range" class="scrub" id="scrub" min="0" max="0" value="0" aria-label="Step">
+      <span class="count" id="count2"></span>
+    </div>
+  </section>
+
+  <!-- ================= THE TRICK ================= -->
+  <section id="tab-trick" hidden style="flex-direction:column; gap:20px">
+    <div class="intro">
+      <h2>The outline trick</h2>
+      <p>Complete the tree, then trace once around it and read off all three orders.</p>
+    </div>
+
+    <div class="controls">
+      <div class="field"><span class="cap">Mode</span>
+        <div class="seg" id="segTMode">
+          <button data-v="watch" aria-pressed="true">Watch</button>
+          <button data-v="practice" aria-pressed="false">Practise</button>
+        </div>
+      </div>
+      <div class="field" id="fShow"><span class="cap">Show</span>
+        <div class="seg" id="segTrick">
+          <button data-v="all" aria-pressed="true">All Three</button>
+          <button data-v="pre" aria-pressed="false">Pre-order</button>
+          <button data-v="in" aria-pressed="false">In-order</button>
+          <button data-v="post" aria-pressed="false">Post-order</button>
+        </div>
+      </div>
+      <div class="field" id="fTree"><label class="cap" for="trickPreset">Tree</label>
+        <select id="trickPreset"></select>
+      </div>
+      <button class="btn" id="trickRand">Random Tree</button>
+    </div>
+
+    <div class="workspace">
+      <div class="cell stage">
+        <ol class="steps"><li id="st1"><b>1</b>Complete the tree</li><li id="st2"><b>2</b>Trace the outline</li></ol>
+        <p class="tnarr tprompt" id="tNarr" aria-live="polite"></p>
+        <div class="canvas"><svg id="trickSvg" role="img" aria-label="Tree with the outline being traced"></svg></div>
+        <div class="keyrow">
+          <span><svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="6" fill="var(--cell)" stroke="var(--sep)"/><circle cx="4.5" cy="11" r="3.5" fill="var(--c-pre)"/></svg>Left = pre</span>
+          <span><svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="6" fill="var(--cell)" stroke="var(--sep)"/><circle cx="11" cy="17.5" r="3.5" fill="var(--c-in)"/></svg>Below = in</span>
+          <span><svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="6" fill="var(--cell)" stroke="var(--sep)"/><circle cx="17.5" cy="11" r="3.5" fill="var(--c-post)"/></svg>Right = post</span>
+          <span><svg viewBox="0 0 22 22" aria-hidden="true"><line x1="11" y1="2" x2="11" y2="13" stroke="var(--label-2)" stroke-width="2" stroke-dasharray="3 2"/><rect x="7" y="13" width="8" height="8" rx="2" fill="var(--cell)" stroke="var(--label-2)" stroke-width="1.5"/></svg>Empty edge</span>
+        </div>
+        <div class="tcontrols" id="tControls" role="toolbar" aria-label="Outline playback">
+          <button class="icon" id="tReset" title="Start over" aria-label="Start over"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
+          <button class="icon" id="tPrev" title="Previous step" aria-label="Previous step"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM19 5v14L9 12z"/></svg></button>
+          <button class="icon play" id="tPlay" title="Play or pause" aria-label="Play"><svg viewBox="0 0 24 24" id="tPlayIco"><path d="M8 5v14l11-7z"/></svg></button>
+          <button class="icon" id="tNext" title="Next step" aria-label="Next step"><svg viewBox="0 0 24 24"><path d="M5 5v14l10-7zM16 5h2v14h-2z"/></svg></button>
+          <input type="range" class="slider" id="tSpeed" min="0" max="100" value="45" aria-label="Pencil speed">
+        </div>
+        <div class="pbar" id="pBar" hidden>
+          <div class="feedback" id="tFb" aria-live="polite"></div>
+          <div class="row2">
+            <button class="btn prominent" id="pDone">Done Adding Edges</button>
+            <button class="btn" id="pReveal">Show Answer</button>
+            <button class="btn plain" id="pNew">New Tree</button>
+            <span class="tally" id="pTally"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="cell why1">
+          <h3><b>1</b>Why step 1 matters</h3>
+          <p>Every node needs <strong>exactly two edges</strong> below it. A leaf gets two empty edges, and a node with one child gets one.</p>
+          <p>Skip this and the line jumps from a node’s left side straight to its only child, so you miss passing underneath it. <strong>That’s where most in-order mistakes come from.</strong></p>
+          <div class="fact"><b id="factN">9 → 10</b><span>nodes → empty edges. It’s always n + 1.</span></div>
+        </div>
+        <div class="cell panel">
+          <h3>Output</h3>
+          <div class="orows">
+            <div class="orow" data-k="pre"><span class="okey pre-c"><i style="background:var(--c-pre)"></i>Pre-order</span><div class="chips" id="oPre"></div></div>
+            <div class="orow" data-k="in"><span class="okey in-c"><i style="background:var(--c-in)"></i>In-order</span><div class="chips" id="oIn"></div></div>
+            <div class="orow" data-k="post"><span class="okey post-c"><i style="background:var(--c-post)"></i>Post-order</span><div class="chips" id="oPost"></div></div>
+          </div>
+        </div>
+        <details class="cell more">
+          <summary>Why it works</summary>
+          <div class="body">
+            <p>The pencil passes each node three times, at the same moments the recursion would print it:</p>
+            <ul>
+              <li><b>Left side:</b> before either child, so pre-order.</li>
+              <li><b>Underneath:</b> after the left subtree, so in-order.</li>
+              <li><b>Right side:</b> after both subtrees, so post-order.</li>
+            </ul>
+          </div>
+        </details>
+        <p class="src">Adapted from <a href="https://www.youtube.com/watch?v=XRcC7bAtL3c" target="_blank" rel="noopener">Preorder, Inorder and Postorder in 5 Minutes</a> on YouTube.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICE ================= -->
+  <section id="tab-practice" hidden style="flex-direction:column; gap:20px">
+    <div class="controls">
+      <div class="field"><span class="cap">Question type</span>
+        <div class="seg" id="segQ">
+          <button data-v="click" aria-pressed="true">Tap the Order</button>
+          <button data-v="name" aria-pressed="false">Name It</button>
+          <button data-v="rebuild" aria-pressed="false">Rebuild</button>
+        </div>
+      </div>
+      <div class="field" id="qStructWrap"><label class="cap" for="qStruct">Structures</label>
+        <select id="qStruct"><option value="mix">Trees and Lists</option><option value="tree">Trees Only</option><option value="list">Lists Only</option></select>
+      </div>
+    </div>
+    <div class="pgrid">
+      <div class="cell qcard">
+        <div class="qtext" id="qText"></div>
+        <div id="qSeqs" style="display:flex; flex-direction:column; gap:8px"></div>
+        <div class="canvas" id="qBoardWrap"><svg id="qSvg" role="img" aria-label="Question diagram"></svg></div>
+        <div id="qAnswer"></div>
+        <div class="feedback" id="qFb" aria-live="polite"></div>
+        <div class="actions">
+          <button class="btn prominent" id="qNext">New Question</button>
+          <button class="btn" id="qReveal">Show Answer</button>
+          <button class="btn plain" id="qWatch">Watch Animation</button>
+        </div>
+      </div>
+      <div class="side">
+        <div class="rows">
+          <div class="rowi"><span class="t"><b>Solved first try</b></span><span class="v" id="sCorrect">0</span></div>
+          <div class="rowi"><span class="t"><b>Attempted</b></span><span class="v" id="sTotal">0</span></div>
+          <div class="rowi"><span class="t"><b>Current streak</b></span><span class="v" id="sStreak">0</span></div>
+          <div class="rowi"><span class="t"><b>Best streak</b></span><span class="v" id="sBest">0</span></div>
+        </div>
+        <div class="cell tip" id="qTip"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CHEAT SHEET ================= -->
+  <section id="tab-sheet" hidden>
+    <div class="sheet">
+      <div class="cell wide">
+        <h2>The four orders at a glance</h2>
+        <div class="tbl"><table>
+          <thead><tr><th>Order</th><th>Rule</th><th>Tool</th><th>Root is</th><th>Used for</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag">Pre-order</span></td><td><b>N</b> → L → R</td><td>Recursion (stack)</td><td>First</td><td>Copying or serialising a tree, prefix (Polish) notation, printing a folder hierarchy</td></tr>
+            <tr><td><span class="tag">In-order</span></td><td>L → <b>N</b> → R</td><td>Recursion (stack)</td><td>In the middle</td><td>Sorted output from a BST, infix expressions</td></tr>
+            <tr><td><span class="tag">Post-order</span></td><td>L → R → <b>N</b></td><td>Recursion (stack)</td><td>Last</td><td>Deleting or freeing a tree, postfix (RPN) evaluation, computing height or size</td></tr>
+            <tr><td><span class="tag">Level-order</span></td><td>Row by row, left to right</td><td>Queue (BFS)</td><td>First</td><td>Shortest path in an unweighted tree or graph, printing by level, finding width, storing a tree as an array</td></tr>
+          </tbody>
+        </table></div>
+        <p class="sub">Pre, in and post are depth-first: they go as deep as possible before backing up. The prefix tells you where the <b>N</b>ode goes. Level-order is breadth-first: it finishes one whole level before starting the next.</p>
+      </div>
+
+      <div class="cell">
+        <h2>The flag trick for depth-first orders</h2>
+        <ol>
+          <li>Put a flag on every node: on the <b>left side</b> for pre-order, <b>underneath</b> for in-order, on the <b>right side</b> for post-order.</li>
+          <li>Start left of the root and trace around the outside of the tree anticlockwise, hugging every branch.</li>
+          <li>Write each node down the moment you pass its flag.</li>
+        </ol>
+        <p class="sub">For level-order, read the tree like a book instead: top row first, each row left to right.</p>
+      </div>
+
+      <div class="cell">
+        <h2>Level-order step by step</h2>
+        <ol>
+          <li>Put the root in an empty queue.</li>
+          <li>While the queue isn’t empty, take the node at the front and visit it.</li>
+          <li>Add its left child, then its right child, to the back of the queue.</li>
+        </ol>
+        <p class="sub">Using a stack here instead of a queue gives you a depth-first order. Swapping the data structure is a common exam trick.</p>
+      </div>
+
+      <div class="cell">
+        <h2>Linked lists</h2>
+        <ul>
+          <li>A singly linked list is a binary tree where every node has <b>only a right child</b> (<code>next</code>).</li>
+          <li><b>Pre-order</b>, <b>in-order</b> and <b>level-order</b> all print head → tail. Each level holds exactly one node, and there are no left children.</li>
+          <li><b>Post-order</b> prints <b>tail → head</b>. This is the classic “print a list in reverse with recursion” question.</li>
+          <li>Recursion on a list is n calls deep, so it uses O(n) stack space and can overflow. A loop needs only O(1).</li>
+        </ul>
+      </div>
+
+      <div class="cell">
+        <h2>Complexity and counts</h2>
+        <ul>
+          <li>Time is <b>O(n)</b> for all four. Each node is visited once.</li>
+          <li>Depth-first space is <b>O(h)</b>: O(log n) when balanced, O(n) when skewed.</li>
+          <li>Level-order space is <b>O(w)</b>, where w is the widest level. That can reach about n/2 in a complete tree.</li>
+          <li>A tree with n nodes has <b>n + 1 null pointers</b>, so recursive versions make <b>2n + 1 calls</b>.</li>
+        </ul>
+      </div>
+
+      <div class="cell">
+        <h2>Rebuilding a tree</h2>
+        <ul>
+          <li><b>Pre + In</b>, <b>Post + In</b> or <b>Level + In</b> gives exactly one tree (when values are distinct).</li>
+          <li><b>Pre + Post</b> on its own is <b>not</b> enough unless every node has 0 or 2 children.</li>
+          <li>The root is the first value in pre-order or the last value in post-order. Find it in the in-order list: values to its left form the left subtree, and values to its right form the right subtree. Repeat on each side.</li>
+        </ul>
+      </div>
+
+      <div class="cell">
+        <h2>Quick checks</h2>
+        <ul>
+          <li>Pre-order and level-order both start with the root. Post-order ends with it.</li>
+          <li>In all three depth-first orders, leaves appear in the same left-to-right order.</li>
+          <li>In-order on a BST must come out sorted.</li>
+          <li>A missing child is still a step in recursion: you go there, find null, and come back.</li>
+          <li>Reversing post-order gives N → R → L, which is not pre-order.</li>
+        </ul>
+      </div>
+
+      <div class="cell wide">
+        <h2>Worked example: <code>(a + b) * c − d</code></h2>
+        <div class="tbl"><table>
+          <thead><tr><th>Traversal</th><th>Output</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Pre-order</td><td><code>− * + a b c d</code></td><td>Prefix (Polish) notation</td></tr>
+            <tr><td>In-order</td><td><code>a + b * c − d</code></td><td>Infix. Brackets are needed to keep the meaning.</td></tr>
+            <tr><td>Post-order</td><td><code>a b + c * d −</code></td><td>Postfix (Reverse Polish). A stack evaluates it directly.</td></tr>
+            <tr><td>Level-order</td><td><code>− * d + c a b</code></td><td>Row by row. Has no meaning as an expression.</td></tr>
+          </tbody>
+        </table></div>
+        <p class="sub">Try it under Visualise → Example → Expression tree.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(()=>{
+const NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+const ORDERS={pre:['visit','left','right'],in:['left','visit','right'],post:['left','right','visit']};
+const ALL=['pre','in','post','level'];
+const ONAME={pre:'Pre-order',in:'In-order',post:'Post-order',level:'Level-order'};
+const FN={pre:'preorder',in:'inorder',post:'postorder',level:'levelorder'};
+
+/* ---------- structures ---------- */
+let uid=0;
+const mk=v=>({id:'n'+(uid++),val:String(v),left:null,right:null});
+const isNullTok=t=>/^(null|none|nil|#|-|x|_)$/i.test(t);
+function tokens(s){return s.split(/[\s,]+/).filter(Boolean);}
+function parseLevel(str){
+  const t=tokens(str);
+  if(!t.length||isNullTok(t[0]))return{error:'Enter at least a root value, for example 5, 3, 8.'};
+  if(t.filter(x=>!isNullTok(x)).length>15)return{error:'Use 15 nodes or fewer so the tree fits on screen.'};
+  if(t.some(x=>!isNullTok(x)&&x.length>3))return{error:'Each value can be at most 3 characters long.'};
+  const root=mk(t[0]);const q=[root];let i=1;
+  while(q.length&&i<t.length){const p=q.shift();
+    for(const side of['left','right']){if(i>=t.length)break;const v=t[i++];if(!isNullTok(v)){p[side]=mk(v);q.push(p[side]);}}}
+  if(height(root)>5)return{error:'That tree is more than 6 levels deep. Try a shallower one.'};
+  return{root};
+}
+function parseList(str){
+  const t=tokens(str).filter(x=>!isNullTok(x));
+  if(!t.length)return{error:'Enter at least one value, for example 8, 3, 5.'};
+  if(t.length>9)return{error:'Use 9 nodes or fewer so the list fits on screen.'};
+  if(t.some(x=>x.length>3))return{error:'Each value can be at most 3 characters long.'};
+  const head=mk(t[0]);let c=head;for(let i=1;i<t.length;i++){c.right=mk(t[i]);c=c.right;}
+  return{root:head};
+}
+function height(n){return n?1+Math.max(height(n.left),height(n.right)):-1;}
+function collect(root){const a=[];(function w(n){if(!n)return;a.push(n);w(n.left);w(n.right);})(root);return a;}
+function makeStruct(mode,root){return{mode,root,nodes:collect(root)};}
+function serializeLevel(root){const out=[];const q=[root];while(q.length){const n=q.shift();if(!n){out.push('null');continue;}out.push(n.val);q.push(n.left,n.right);}
+  while(out[out.length-1]==='null')out.pop();return out.join(', ');}
+function serializeList(root){const a=[];for(let n=root;n;n=n.right)a.push(n.val);return a.join(', ');}
+function traverseIds(root,order){
+  const out=[];
+  if(order==='level'){const q=root?[root]:[];while(q.length){const n=q.shift();out.push(n);if(n.left)q.push(n.left);if(n.right)q.push(n.right);}return out;}
+  (function w(n){if(!n)return;for(const a of ORDERS[order]){if(a==='visit')out.push(n);else w(n[a]);}})(root);return out;
+}
+function randomTree(n,maxDepth=3){
+  const vals=shuffle(Array.from({length:60},(_,i)=>i+1)).slice(0,n);
+  const root=mk(vals[0]);root._d=0;const all=[root];
+  for(let k=1;k<n;k++){const cand=[];all.forEach(p=>{if(p._d<maxDepth){if(!p.left)cand.push([p,'left']);if(!p.right)cand.push([p,'right']);}});
+    if(!cand.length)break;const[p,s]=pick(cand);const c=mk(vals[k]);c._d=p._d+1;p[s]=c;all.push(c);}
+  return root;
+}
+function randomList(n){const vals=shuffle(Array.from({length:40},(_,i)=>i+1)).slice(0,n);return parseList(vals.join(',')).root;}
+
+/* ---------- board (SVG renderer) ---------- */
+class Board{
+  constructor(svg,prefix){this.svg=svg;this.p=prefix;this.onPick=null;this.flags=null;this.levels=false;}
+  build(st){
+    this.st=st;const svg=this.svg;svg.innerHTML='';this.els={};this.edges=[];
+    const byId={};st.nodes.forEach(n=>byId[n.id]=n);this.byId=byId;
+    const defs=S('defs',{},svg);
+    for(const k of['','hot']){const m=S('marker',{id:this.p+'arr'+k,viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto'},defs);
+      S('path',{d:'M0,0 L10,5 L0,10 z',class:'arrhead '+k},m);}
+    let W,H;
+    this.lvlG=S('g',{class:'lvl'},svg);
+    if(st.mode==='tree'){
+      let i=0,maxD=0;(function w(n,d){if(!n)return;w(n.left,d+1);n._x=i++;n._depth=d;maxD=Math.max(maxD,d);w(n.right,d+1);})(st.root,0);
+      const gx=54,gy=74,padX=52,top=58;const span=(i-1)*gx;
+      W=Math.max(span+padX*2,320);const off=(W-span)/2;
+      st.nodes.forEach(n=>{n.px=off+n._x*gx;n.py=top+n._depth*gy;});
+      H=top+maxD*gy+80;this.maxD=maxD;this.gy=gy;this.top=top;
+      const eg=S('g',{},svg);
+      st.nodes.forEach(n=>['left','right'].forEach(s=>{const c=n[s];if(!c)return;
+        const e=S('line',{x1:n.px,y1:n.py,x2:c.px,y2:c.py,class:'edge'},eg);this.edges.push({a:n.id,b:c.id,el:e});}));
+    }else{
+      const step=128,padX=26,y=72;let i=0;
+      for(let n=st.root;n;n=n.right){n.px=padX+38+i*step;n.py=y;i++;}
+      const last=st.nodes[st.nodes.length-1];
+      W=last.px+38+110;H=140;
+      const eg=S('g',{},svg);
+      st.nodes.forEach(n=>{
+        const x1=n.px+26,x2=n.right?n.right.px-40:n.px+38+44;
+        const e=S('line',{x1,y1:y,x2,y2:y,class:'edge','marker-end':`url(#${this.p}arr)`},eg);
+        this.edges.push({a:n.id,b:n.right?n.right.id:'null:'+n.id+':right',el:e});
+      });
+      this.nullTerm=S('text',{x:last.px+38+48,y:y,class:'nullterm','dominant-baseline':'central'},svg);this.nullTerm.textContent='null';
+    }
+    this.W=W;this.H=H;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.maxWidth=Math.round(W*1.35)+'px';svg.style.minWidth=Math.min(W,520)+'px';
+    this.ghost=S('g',{class:'ghost'},svg);this.ghost.style.display='none';
+    this.gLine=S('line',{},this.ghost);this.gCirc=S('circle',{r:12},this.ghost);this.gText=S('text',{},this.ghost);this.gText.textContent='∅';
+    this.flagG=S('g',{},svg);
+    const ng=S('g',{},svg);
+    st.nodes.forEach(n=>{
+      const g=S('g',{class:'n',transform:`translate(${n.px},${n.py})`,tabindex:'-1','data-id':n.id,'aria-label':n.val},ng);
+      if(st.mode==='tree'){S('circle',{r:25,class:'ring'},g);S('circle',{r:20,class:'body'},g);S('text',{class:'val'},g).textContent=n.val;}
+      else{S('rect',{x:-43,y:-25,width:86,height:50,rx:14,class:'ring'},g);S('rect',{x:-38,y:-20,width:76,height:40,rx:10,class:'body'},g);S('line',{x1:14,y1:-20,x2:14,y2:20,class:'divider'},g);
+        S('circle',{cx:26,cy:0,r:3.5,class:'nextdot'},g);const t=S('text',{class:'val',x:-12},g);t.textContent=n.val;}
+      const bx=st.mode==='tree'?17:36,by=st.mode==='tree'?-17:-20;
+      const b=S('g',{class:'badge',transform:`translate(${bx},${by})`},g);S('circle',{r:9},b);const bt=S('text',{},b);
+      g.addEventListener('click',()=>this.onPick&&this.onPick(n.id));
+      g.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&this.onPick){e.preventDefault();this.onPick(n.id);}});
+      this.els[n.id]={g,bt};
+    });
+    this.ptr=S('g',{class:'pointer'},svg);const pt=S('text',{y:-10},this.ptr);pt.textContent='node';S('path',{d:'M-5,-6 L5,-6 L0,0 z'},this.ptr);
+    this.ptr.style.display='none';
+    this.setFlags(this.flags);this.setLevels(this.levels);
+  }
+  setPickable(on){this.svg.classList.toggle('pick',on);Object.values(this.els||{}).forEach(e=>{e.g.setAttribute('tabindex',on?'0':'-1');if(on)e.g.setAttribute('role','button');else e.g.removeAttribute('role');});}
+  setLevels(on){
+    this.levels=on;if(!this.lvlG)return;this.lvlG.innerHTML='';
+    if(!on||this.st.mode!=='tree')return;
+    for(let d=0;d<=this.maxD;d++){const y=this.top+d*this.gy;
+      S('line',{x1:30,y1:y,x2:this.W-8,y2:y},this.lvlG);const t=S('text',{x:6,y:y+4},this.lvlG);t.textContent='L'+d;}
+  }
+  setFlags(order){
+    this.flags=order;if(!this.flagG)return;this.flagG.innerHTML='';this.flagEls={};
+    if(!order||order==='level')return;const tree=this.st.mode==='tree';
+    this.st.nodes.forEach(n=>{let dx=0,dy=0;
+      if(order==='pre')dx=tree?-32:-50;else if(order==='post')dx=tree?32:50;else dy=tree?32:32;
+      this.flagEls[n.id]=S('circle',{cx:n.px+dx,cy:n.py+dy,r:5,class:'flag'},this.flagG);});
+  }
+  pointAt(x,y){this.ptr.style.display='';this.ptr.style.transform=`translate(${x}px,${y}px)`;}
+  update(s){
+    const waiting=new Set(s.stack||[]);const ord=new Map((s.out||[]).map((id,i)=>[id,i+1]));
+    for(const id in this.els){const{g,bt}=this.els[id];
+      g.classList.toggle('cur',s.cur===id);g.classList.toggle('stk',waiting.has(id)&&s.cur!==id);
+      g.classList.toggle('vis',ord.has(id));if(ord.has(id))bt.textContent=ord.get(id);
+      if(this.flagEls&&this.flagEls[id])this.flagEls[id].classList.toggle('got',ord.has(id));}
+    this.edges.forEach(e=>{const hot=!s.queue&&waiting.has(e.a)&&waiting.has(e.b);e.el.classList.toggle('hot',hot);
+      if(this.st.mode==='list')e.el.setAttribute('marker-end',`url(#${this.p}arr${hot?'hot':''})`);});
+    this.ghost.style.display='none';if(this.nullTerm)this.nullTerm.classList.remove('on');
+    const cur=s.cur;
+    if(cur&&cur.startsWith('null:')){
+      const[,pid,side]=cur.split(':');const p=this.byId[pid];
+      if(this.st.mode==='list'){this.nullTerm.classList.add('on');this.pointAt(p.px+38+64,p.py-16);}
+      else{const gx=p.px+(side==='left'?-26:26),gy=p.py+54;
+        this.ghost.style.display='';this.gLine.setAttribute('x1',p.px);this.gLine.setAttribute('y1',p.py+20);
+        this.gLine.setAttribute('x2',gx);this.gLine.setAttribute('y2',gy-12);
+        this.gCirc.setAttribute('cx',gx);this.gCirc.setAttribute('cy',gy);this.gText.setAttribute('x',gx);this.gText.setAttribute('y',gy);
+        this.pointAt(gx,gy-14);}
+    }else if(cur&&this.byId[cur]){const n=this.byId[cur];this.pointAt(n.px,n.py-24);}
+    else this.ptr.style.display='none';
+  }
+  flash(id){const g=this.els[id]&&this.els[id].g;if(!g)return;g.classList.remove('wrong');void g.getBBox();g.classList.add('wrong');setTimeout(()=>g.classList.remove('wrong'),600);}
+}
+
+/* ---------- code templates ---------- */
+function codeLines(lang,mode,order){
+  const f=FN[order];const nx=mode==='list'?'next':'right';
+  const L=[];
+  if(order==='level'){
+    const kids=mode==='list'?[nx]:['left',nx];
+    if(lang==='py'){
+      L.push([`def ${f}(root):`,'sig'],['    if root is None:','null'],['        return','null'],['    queue = deque([root])','init'],['    while queue:','loop'],
+        ['        node = queue.popleft()','deq'],['        print(node.val)','visit']);
+      kids.forEach(k=>{const t=k==='left'?'left':'right';L.push([`        if node.${k}:`,t],[`            queue.append(node.${k})`,t]);});
+    }else if(lang==='java'){
+      L.push([`void ${f}(Node root) {`,'sig'],['    if (root == null) return;','null'],['    Queue<Node> queue = new ArrayDeque<>();','init'],['    queue.add(root);','init'],
+        ['    while (!queue.isEmpty()) {','loop'],['        Node node = queue.poll();','deq'],['        System.out.print(node.val + " ");','visit']);
+      kids.forEach(k=>L.push([`        if (node.${k} != null) queue.add(node.${k});`,k==='left'?'left':'right']));
+      L.push(['    }','loop'],['}','end']);
+    }else{
+      L.push([`void ${f}(Node* root) {`,'sig'],['    if (root == nullptr) return;','null'],['    queue<Node*> q;','init'],['    q.push(root);','init'],
+        ['    while (!q.empty()) {','loop'],['        Node* node = q.front(); q.pop();','deq'],['        cout << node->val << " ";','visit']);
+      kids.forEach(k=>L.push([`        if (node->${k}) q.push(node->${k});`,k==='left'?'left':'right']));
+      L.push(['    }','loop'],['}','end']);
+    }
+    return L;
+  }
+  const body={
+    visit:{py:'print(node.val)',java:'System.out.print(node.val + " ");',cpp:'cout << node->val << " ";'}[lang],
+    left:{py:`${f}(node.left)`,java:`${f}(node.left);`,cpp:`${f}(node->left);`}[lang],
+    right:{py:`${f}(node.${nx})`,java:`${f}(node.${nx});`,cpp:`${f}(node->${nx});`}[lang],
+    leftc:{py:'# a list node has no left child',java:'// a list node has no left child',cpp:'// a list node has no left child'}[lang],
+  };
+  if(lang==='py')L.push([`def ${f}(node):`,'sig'],['    if node is None:','null'],['        return','null']);
+  else if(lang==='java')L.push([`void ${f}(Node node) {`,'sig'],['    if (node == null)','null'],['        return;','null']);
+  else L.push([`void ${f}(Node* node) {`,'sig'],['    if (node == nullptr)','null'],['        return;','null']);
+  ORDERS[order].forEach(a=>{
+    if(a==='left'&&mode==='list'){if(order==='in')L.push(['    '+body.leftc,'leftc']);return;}
+    L.push(['    '+body[a],a]);
+  });
+  L.push(lang==='py'?['    # finished: return to caller','end']:['}','end']);
+  return L;
+}
+function hl(line,lang){
+  let h=esc(line);
+  const cm=lang==='py'?/(#.*)$/:/(\/\/.*)$/;
+  let comment='';const m=h.match(cm);if(m){comment=m[1];h=h.slice(0,m.index);}
+  const kws=lang==='py'?['def','if','is','None','return','while','print']:lang==='java'?['void','if','null','return','while','new']:['void','if','nullptr','return','while','cout'];
+  h=h.replace(new RegExp('\\b('+kws.join('|')+')\\b','g'),'<span class="kw">$1</span>');
+  return h+(comment?'<span class="cm">'+comment+'</span>':'');
+}
+
+/* ---------- step generation ---------- */
+function valsOf(st,ids){return ids.map(id=>st.nodes.find(n=>n.id===id).val).join(', ');}
+function buildLevelSteps(st){
+  const mode=st.mode;const steps=[],q=[],out=[];
+  const snap=o=>steps.push(Object.assign({stack:q.slice(),out:out.slice(),queue:true},o));
+  const word=a=>a==='left'?'left child':(mode==='list'?'next':'right child');
+  q.push(st.root.id);
+  snap({line:'init',cur:null,msg:`Start: put the ${mode==='list'?'head':'root'}, ${st.root.val}, in the queue.`});
+  while(q.length){
+    snap({line:'loop',cur:null,msg:`The queue holds ${q.length} node${q.length>1?'s':''}, so the loop keeps going.`});
+    const id=q.shift();const n=st.nodes.find(x=>x.id===id);
+    snap({line:'deq',cur:id,msg:`Take ${n.val} from the front of the queue.`});
+    out.push(id);
+    snap({line:'visit',cur:id,msg:`Visit ${n.val}. Output: ${valsOf(st,out)}.`});
+    for(const a of mode==='list'?['right']:['left','right']){const c=n[a];
+      if(c){q.push(c.id);snap({line:a,cur:id,msg:`Add ${n.val}’s ${word(a)}, ${c.val}, to the back of the queue.`});}
+      else snap({line:a,cur:id,msg:`${n.val} has no ${word(a)}, so nothing is added.`});}
+  }
+  snap({line:'loop',cur:null,msg:'The queue is empty, so the loop ends.'});
+  snap({line:null,cur:null,done:true,msg:`Done. Level-order: ${valsOf(st,out)}.`});
+  return steps;
+}
+function buildSteps(st,order,showNull){
+  if(order==='level')return buildLevelSteps(st);
+  const mode=st.mode;let acts=ORDERS[order].slice();if(mode==='list')acts=acts.filter(a=>a!=='left');
+  const f=FN[order];const steps=[],stack=[],out=[];
+  const word=a=>a==='left'?'left child':(mode==='list'?'next':'right child');
+  const why={tree:{pre:'Pre-order visits a node before its children.',in:'In-order visits a node after its whole left subtree.',post:'Post-order visits a node only after both subtrees are done.'},
+             list:{pre:'Pre-order visits before handling the rest of the list.',in:'With no left subtree, in-order visits straight away, just like pre-order.',post:'Post-order visits only after the rest of the list returns, which is why the output comes out backwards.'}}[mode][order];
+  const snap=o=>steps.push(Object.assign({stack:stack.slice(),out:out.slice()},o));
+  function rec(n,parent,side){
+    if(!n){const key='null:'+parent.id+':'+side;
+      if(showNull){stack.push(key);snap({line:'null',cur:key,msg:`${f}(null) has nothing to do. It’s the base case, so return to ${parent.val}.`});stack.pop();}
+      return;}
+    stack.push(n.id);
+    snap({line:'sig',cur:n.id,msg:parent?`Call ${f}(${n.val}) from ${parent.val}’s ${word(side)}.`:`Start: call ${f}(${n.val}) on the ${mode==='list'?'head':'root'}.`});
+    for(const a of acts){
+      if(a==='visit'){out.push(n.id);snap({line:'visit',cur:n.id,msg:`Visit ${n.val}. ${why}`});}
+      else{const c=n[a];
+        if(!c&&!showNull)continue;
+        snap({line:a,cur:n.id,msg:c?`At ${n.val}, go to its ${word(a)}, ${c.val}.`:`At ${n.val}, the ${word(a)} is null, but the call still happens.`});
+        rec(c,n,a);}
+    }
+    snap({line:'end',cur:n.id,msg:parent?`${f}(${n.val}) is finished. Return to ${f}(${parent.val}).`:`${f}(${n.val}) is finished, so the call stack is empty.`});
+    stack.pop();
+  }
+  rec(st.root,null,null);
+  snap({line:null,cur:null,done:true,msg:`Done. ${ONAME[order]}: ${valsOf(st,out)}.`});
+  return steps;
+}
+
+const INSIGHT={
+  tree:{pre:'<strong>Exam tip:</strong> the first value is always the root. Pre-order copies or serialises a tree, and on an expression tree it gives prefix notation.',
+        in:'<strong>Exam tip:</strong> on a binary search tree, in-order output is sorted. The root splits the left subtree from the right, which is the key to rebuilding a tree.',
+        post:'<strong>Exam tip:</strong> the last value is always the root. Use post-order to free a tree (children before parent) or to evaluate a postfix expression.',
+        level:'<strong>Exam tip:</strong> level-order uses a queue, not recursion. Read the tree row by row, left to right. Swap the queue for a stack and you get a depth-first order instead.'},
+  list:{pre:'<strong>Exam tip:</strong> visit, then recurse, and the list prints head → tail. Recursion still uses O(n) stack space, while a simple loop needs only O(1).',
+        in:'<strong>Exam tip:</strong> a list has no left children, so in-order comes out exactly like pre-order. Watch for trick questions on this.',
+        post:'<strong>Exam tip:</strong> recurse first, then visit, and the list prints <strong>in reverse</strong>. This is the classic “print a linked list backwards recursively” answer.',
+        level:'<strong>Exam tip:</strong> every level of a list holds one node, so level-order is just head → tail. The queue never holds more than one node.'}
+};
+
+const PRESETS={
+  tree:[['Classic letters tree','F, B, G, A, D, null, I, null, null, C, E, H'],['Expression tree: (a+b)*c − d','−, *, d, +, c, null, null, a, b'],['Binary search tree','50, 30, 70, 20, 40, 60, 80'],['Skewed tree (a list in disguise)','1, null, 2, null, 3, null, 4'],['Small tree','1, 2, 3, 4, 5']],
+  list:[['Numbers','8, 3, 5, 1, 9'],['Letters','A, B, C, D'],['Two nodes','1, 2']]
+};
+
+/* ---------- Visualise ---------- */
+const V={mode:'tree',order:'pre',lang:'py',st:null,steps:[],i:0,playing:false,timer:null,showNull:true,flags:false};
+const board=new Board($('vizSvg'),'v');
+function setPressed(seg,v){seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));}
+function fillPresets(){$('preset').innerHTML=PRESETS[V.mode].map((p,i)=>`<option value="${i}">${esc(p[0])}</option>`).join('')+'<option value="custom" hidden>Custom</option>';}
+function setDataLabel(){$('dataLbl').textContent=V.mode==='tree'?'Tree values in level order. Use null for an empty spot.':'List values from head to tail.';}
+function applyBoardOptions(){
+  const lvl=V.order==='level';
+  board.setFlags(V.flags&&!lvl?V.order:null);board.setLevels(lvl);
+  $('optNull').disabled=lvl;$('optFlags').disabled=lvl;
+  $('rowNull').classList.toggle('dis',lvl);$('rowFlags').classList.toggle('dis',lvl);
+  $('flagSub').textContent=lvl?'Level-order has no flags. Read each row left to right instead.':'Puts a dot on each node. Write the node down when you trace past its dot.';
+  $('waitLbl').textContent=lvl?'Waiting in the queue':'Waiting on the call stack';
+  $('stackTitle').textContent=lvl?'Queue':'Call Stack';
+}
+function loadData(text){
+  const r=V.mode==='tree'?parseLevel(text):parseList(text);
+  if(r.error){$('dataErr').textContent=r.error;return false;}
+  $('dataErr').textContent='';V.st=makeStruct(V.mode,r.root);board.build(V.st);applyBoardOptions();rebuild();return true;
+}
+function rebuild(){
+  stop();V.steps=buildSteps(V.st,V.order,V.showNull);V.i=0;
+  $('scrub').max=V.steps.length-1;renderCode();render();
+}
+function renderCode(){
+  const lines=codeLines(V.lang,V.mode,V.order);V.codeTags=lines.map(l=>l[1]);
+  $('code').innerHTML=lines.map((l,i)=>`<div class="ln"><b>${i+1}</b>${hl(l[0],V.lang)}</div>`).join('');
+  $('codeName').textContent=V.lang==='py'?'Python':V.lang==='java'?'Java':'C++';
+  $('outName').textContent=ONAME[V.order];
+  $('insight').innerHTML=INSIGHT[V.mode][V.order];
+}
+function render(){
+  const s=V.steps[V.i];if(!s)return;
+  board.update(s);
+  $('narr').textContent=s.msg;
+  const cnt=`Step ${V.i+1} of ${V.steps.length}`;$('count').textContent=`${ONAME[V.order]} · ${cnt}`;$('count2').textContent=`${V.i+1} / ${V.steps.length}`;
+  $('scrub').value=V.i;
+  $('code').querySelectorAll('.ln').forEach((el,i)=>el.classList.toggle('on',!!s.line&&V.codeTags[i]===s.line));
+  const nm=k=>k.startsWith('null:')?'null':V.st.nodes.find(n=>n.id===k).val;
+  let items,html;
+  if(s.queue){items=s.stack;
+    html=items.map((k,i)=>`<li>${esc(nm(k))}<span>${i===0?'front':i===items.length-1?'back':''}</span></li>`).join('');
+    $('depth').textContent=`${items.length} waiting`;}
+  else{items=s.stack.slice().reverse();
+    html=items.map((k,i)=>`<li>${FN[V.order]}(${esc(nm(k))})<span>${i===0?'running':'paused'}</span></li>`).join('');
+    $('depth').textContent=`Depth ${items.length}`;}
+  $('stack').innerHTML=items.length?html:'<li class="empty">Empty</li>';
+  const chips=s.out.map((id,i)=>`<span class="chip">${esc(nm(id))}<small>${i+1}</small></span>`);
+  for(let k=s.out.length;k<V.st.nodes.length;k++)chips.push('<span class="chip ghosty">?</span>');
+  $('out').innerHTML=chips.join('');
+}
+function delay(){return Math.round(1700-(+$('speed').value)*15);}
+function setPlayIcon(){$('playIco').innerHTML=V.playing?'<path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/>':'<path d="M8 5v14l11-7z"/>';$('bPlay').setAttribute('aria-label',V.playing?'Pause':'Play');}
+function tick(){if(V.i>=V.steps.length-1){stop();return;}V.i++;render();V.timer=setTimeout(tick,delay());}
+function play(){if(V.i>=V.steps.length-1){V.i=0;render();}V.playing=true;setPlayIcon();V.timer=setTimeout(tick,Math.min(400,delay()));}
+function stop(){V.playing=false;clearTimeout(V.timer);setPlayIcon();}
+function go(d){stop();V.i=Math.max(0,Math.min(V.steps.length-1,V.i+d));render();}
+
+$('segMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.dataset.v===V.mode)return;
+  V.mode=b.dataset.v;setPressed($('segMode'),V.mode);fillPresets();setDataLabel();
+  $('dataIn').value=PRESETS[V.mode][0][1];loadData($('dataIn').value);});
+$('segOrder').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;V.order=b.dataset.v;setPressed($('segOrder'),V.order);applyBoardOptions();rebuild();});
+$('lang').addEventListener('change',e=>{V.lang=e.target.value;renderCode();render();});
+$('preset').addEventListener('change',e=>{if(e.target.value==='custom')return;$('dataIn').value=PRESETS[V.mode][+e.target.value][1];loadData($('dataIn').value);});
+$('applyBtn').addEventListener('click',()=>{if(loadData($('dataIn').value))$('preset').value='custom';});
+$('dataIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('applyBtn').click();});
+$('randBtn').addEventListener('click',()=>{const root=V.mode==='tree'?randomTree(5+rnd(6)):randomList(4+rnd(4));
+  $('dataIn').value=V.mode==='tree'?serializeLevel(root):serializeList(root);loadData($('dataIn').value);$('preset').value='custom';});
+$('bPlay').addEventListener('click',()=>V.playing?stop():play());
+$('bFwd').addEventListener('click',()=>go(1));$('bBack').addEventListener('click',()=>go(-1));
+$('bReset').addEventListener('click',()=>{stop();V.i=0;render();});
+$('scrub').addEventListener('input',e=>{stop();V.i=+e.target.value;render();});
+$('optNull').addEventListener('change',e=>{V.showNull=e.target.checked;rebuild();});
+$('optFlags').addEventListener('change',e=>{V.flags=e.target.checked;applyBoardOptions();render();});
+document.addEventListener('keydown',e=>{
+  if($('tab-viz').hidden)return;const a=document.activeElement;
+  if(/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&a.type!=='range'&&a.type!=='checkbox')return;
+  if(e.key===' '){e.preventDefault();V.playing?stop():play();}
+  else if(e.key==='ArrowRight'){e.preventDefault();go(1);}else if(e.key==='ArrowLeft'){e.preventDefault();go(-1);}
+  else if(e.key==='Home'){stop();V.i=0;render();}
+});
+
+/* ---------- tabs ---------- */
+function showTab(t){['viz','trick','practice','sheet'].forEach(k=>{const el=$('tab-'+k);el.hidden=k!==t;if(k!=='sheet')el.style.display=k===t?'flex':'';$('t-'+k).setAttribute('aria-selected',k===t);});
+  if(t!=='viz')stop();if(t!=='trick')trickStop();if(t==='trick')trickInit();if(t==='practice'&&!Q.cur)newQuestion();}
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab);});
+
+/* ---------- Practice ---------- */
+const qb=new Board($('qSvg'),'q');
+const Q={type:'click',cur:null};
+let stats={correct:0,total:0,streak:0,best:0};
+try{const s=JSON.parse(localStorage.getItem('traversal-lab-stats'));if(s&&typeof s.total==='number')stats=s;}catch(e){}
+function saveStats(){try{localStorage.setItem('traversal-lab-stats',JSON.stringify(stats));}catch(e){}renderStats();}
+function renderStats(){$('sCorrect').textContent=stats.correct;$('sTotal').textContent=stats.total;$('sStreak').textContent=stats.streak;$('sBest').textContent=stats.best;}
+function record(ok){if(Q.cur.recorded)return;Q.cur.recorded=true;stats.total++;if(ok){stats.correct++;stats.streak++;stats.best=Math.max(stats.best,stats.streak);}else stats.streak=0;saveStats();}
+const TIPS={
+  click:'<h3>How to approach it</h3><p>For pre, in and post, imagine a dot on the left, bottom or right of each node. Trace around the tree anticlockwise from the root and tap each node as you pass its dot. For level-order, tap row by row, left to right.</p><p>A wrong tap resets your streak, but you can keep going.</p>',
+  name:'<h3>How to approach it</h3><p>Look at the ends first. If it ends with the root, it’s post-order. If it starts with the root, it’s pre-order or level-order: is the second value a direct child of the root, and does the order go row by row? If the root is in the middle, it’s in-order.</p><p>Some structures give the same output for more than one order. Every matching answer counts as correct.</p>',
+  rebuild:'<h3>How to approach it</h3><p>The root is the first value in pre-order or the last in post-order. Find it in the in-order list to split the rest into left and right subtrees. Repeat on each side, then read off the order asked for.</p><p>Separate values with spaces or commas.</p>'
+};
+function qStructMode(){const v=$('qStruct').value;return v==='mix'?pick(['tree','tree','list']):v;}
+function newQuestion(){
+  const type=Q.type;$('qFb').textContent='';$('qFb').className='feedback';$('qAnswer').innerHTML='';$('qSeqs').innerHTML='';
+  $('qTip').innerHTML=TIPS[type];$('qStructWrap').hidden=type==='rebuild';
+  const mode=type==='rebuild'?'tree':qStructMode();
+  const root=mode==='tree'?randomTree(type==='rebuild'?5+rnd(3):5+rnd(5)):randomList(4+rnd(4));
+  const st=makeStruct(mode,root);const order=pick(ALL);
+  Q.cur={type,mode,st,order,picked:[],mistakes:0,done:false,recorded:false};
+  qb.onPick=null;qb.levels=false;qb.build(st);qb.setPickable(false);qb.update({cur:null,stack:[],out:[]});
+  const seqStr=o=>traverseIds(root,o).map(n=>n.val).join('  ');
+  if(type==='click'){
+    $('qText').innerHTML=`Tap the nodes in <em>${ONAME[order]}</em> order.`;
+    $('qBoardWrap').hidden=false;qb.setPickable(true);
+    const expect=traverseIds(root,order).map(n=>n.id);
+    qb.onPick=id=>{const c=Q.cur;if(c.done||c.picked.includes(id))return;
+      if(id===expect[c.picked.length]){c.picked.push(id);qb.update({cur:null,stack:[],out:c.picked});
+        if(c.picked.length===expect.length){c.done=true;record(c.mistakes===0);
+          $('qFb').className='feedback ok';$('qFb').textContent=c.mistakes?`✓ Complete, with ${c.mistakes} wrong tap${c.mistakes>1?'s':''}.`:'✓ Correct on the first try.';}
+        else{$('qFb').className='feedback';$('qFb').textContent=`${c.picked.length} of ${expect.length} so far.`;}}
+      else{c.mistakes++;qb.flash(id);if(c.mistakes===1)record(false);const nv=st.nodes.find(n=>n.id===id).val;
+        $('qFb').className='feedback bad';$('qFb').textContent=`✕ ${nv} doesn’t come next. Try another node.`;}};
+  }else if(type==='name'){
+    $('qText').innerHTML='Which traversal gives this output?';$('qBoardWrap').hidden=false;
+    $('qSeqs').innerHTML=`<div class="seq"><span>Output</span>${esc(seqStr(order))}</div>`;
+    const target=seqStr(order);const okSet=ALL.filter(o=>seqStr(o)===target);
+    $('qAnswer').innerHTML='<div class="choices">'+ALL.map(o=>`<button class="btn" data-o="${o}">${ONAME[o]}</button>`).join('')+'</div>';
+    $('qAnswer').querySelector('.choices').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||Q.cur.done)return;
+      const ok=okSet.includes(b.dataset.o);Q.cur.done=true;record(ok);
+      $('qAnswer').querySelectorAll('button').forEach(x=>{if(okSet.includes(x.dataset.o))x.classList.add('right');else if(x===b)x.classList.add('wrongc');});
+      qb.update({cur:null,stack:[],out:traverseIds(root,okSet[0]).map(n=>n.id)});
+      $('qFb').className='feedback '+(ok?'ok':'bad');
+      $('qFb').textContent=(ok?'✓ Correct. ':'✕ Not quite. ')+(okSet.length>1?`On this ${mode==='list'?'list':'tree'}, ${okSet.map(o=>ONAME[o]).join(', ')} all give this output.`:`The answer is ${ONAME[okSet[0]]}.`);});
+  }else{
+    const pair=pick([['pre','in','post'],['in','post','pre'],['level','in','post']]);Q.cur.order=pair[2];
+    $('qText').innerHTML=`Using these two traversals, write the <em>${ONAME[pair[2]]}</em>.`;
+    $('qBoardWrap').hidden=true;
+    $('qSeqs').innerHTML=pair.slice(0,2).map(o=>`<div class="seq"><span>${ONAME[o]}</span>${esc(seqStr(o))}</div>`).join('');
+    $('qAnswer').innerHTML=`<div class="datarow"><input class="txt" id="qInput" placeholder="For example: 12 7 31" spellcheck="false" autocomplete="off" aria-label="Your answer"><button class="btn prominent" id="qCheck">Check</button></div>`;
+    const expect=traverseIds(root,pair[2]).map(n=>n.val);
+    const check=()=>{const got=tokens($('qInput').value);if(!got.length)return;
+      const ok=got.length===expect.length&&got.every((v,i)=>v===expect[i]);
+      if(ok){Q.cur.done=true;record(Q.cur.mistakes===0);$('qFb').className='feedback ok';$('qFb').textContent='✓ Correct. This is the tree you rebuilt.';reveal(true);}
+      else{Q.cur.mistakes++;record(false);const firstBad=got.findIndex((v,i)=>v!==expect[i]);
+        $('qFb').className='feedback bad';$('qFb').textContent=firstBad===-1||firstBad>=expect.length?`✕ The answer has ${expect.length} values, but you entered ${got.length}.`:`✕ The first ${firstBad} value${firstBad===1?' is':'s are'} right. Check value ${firstBad+1}.`;}};
+    $('qCheck').addEventListener('click',check);$('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')check();});
+  }
+}
+function reveal(silent){
+  const c=Q.cur;if(!c)return;
+  if(!c.done&&!silent)record(false);
+  c.done=true;$('qBoardWrap').hidden=false;
+  const ids=traverseIds(c.st.root,c.order).map(n=>n.id);qb.update({cur:null,stack:[],out:ids});
+  if(!silent){$('qFb').className='feedback';$('qFb').textContent=`${ONAME[c.order]}: ${traverseIds(c.st.root,c.order).map(n=>n.val).join(', ')}`;
+    if(c.type==='name')$('qAnswer').querySelectorAll('button').forEach(x=>{if(traverseIds(c.st.root,x.dataset.o).map(n=>n.id).join()===ids.join())x.classList.add('right');});}
+}
+$('segQ').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;Q.type=b.dataset.v;setPressed($('segQ'),Q.type);newQuestion();});
+$('qStruct').addEventListener('change',newQuestion);
+$('qNext').addEventListener('click',newQuestion);
+$('qReveal').addEventListener('click',()=>reveal(false));
+$('qWatch').addEventListener('click',()=>{const c=Q.cur;if(!c)return;
+  V.mode=c.mode;setPressed($('segMode'),V.mode);fillPresets();setDataLabel();$('preset').value='custom';
+  V.order=c.order;setPressed($('segOrder'),V.order);
+  $('dataIn').value=c.mode==='tree'?serializeLevel(c.st.root):serializeList(c.st.root);
+  showTab('viz');loadData($('dataIn').value);window.scrollTo({top:0,behavior:'smooth'});play();});
+
+/* ---------- The Trick (outline method) ---------- */
+const T={segs:[],events:[],stubs:[],nodes:[],total:0,S:0,U:70,d:0,playing:false,raf:0,target:null,show:'all',inited:false,R:30,RS:9,mode:'watch'};
+const NEXTK={top:'left',left:'bottom',bottom:'right',right:'top'};
+const ANG={top:-Math.PI/2,left:Math.PI,bottom:Math.PI/2,right:0};
+const SIDE={pre:'left side',in:'underside',post:'right side'};
+const DOTW={pre:'left',in:'bottom',post:'right'};
+const KOF={left:'pre',bottom:'in',right:'post'};
+const rOf=n=>n.stub?T.RS:T.R;
+function trickBuild(root){
+  trickStop();const svg=$('trickSvg');svg.innerHTML='';
+  const nodes=collect(root);let i=0,maxD=0;T.nodes=nodes;
+  (function w(n,d){if(!n)return;w(n.left,d+1);n._x=i++;n._depth=d;maxD=Math.max(maxD,d);w(n.right,d+1);})(root,0);
+  const gx=64,gy=88,pad=60,top=52;const span=(i-1)*gx;const W=Math.max(span+pad*2,360);const off=(W-span)/2;
+  nodes.forEach(n=>{n.tx=off+n._x*gx;n.ty=top+n._depth*gy;});
+  const H=top+maxD*gy+72;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.maxWidth=Math.round(W*1.4)+'px';svg.style.minWidth=Math.min(W,520)+'px';
+  // step 1: an empty edge for every missing child, so every node has exactly two
+  const stubs=[];
+  nodes.forEach(n=>['left','right'].forEach(side=>{if(n[side])return;
+    const st={stub:true,parent:n,side,g:0,tx:n.tx+(side==='left'?-26:26),ty:n.ty+44};n['_stub'+side]=st;stubs.push(st);}));
+  T.stubs=stubs;T.S=stubs.length*T.U;
+  $('factN').textContent=`${nodes.length} → ${stubs.length}`;
+  const P=(n,k)=>({n,k,x:n.tx+rOf(n)*Math.cos(ANG[k]),y:n.ty+rOf(n)*Math.sin(ANG[k])});
+  const wp=[P(root,'top')];
+  (function v(n){wp.push(P(n,'left'));
+    if(n.stub){wp.push(P(n,'bottom'),P(n,'right'));return;}
+    v(n.left||n._stubleft);wp.push(P(n,'bottom'));v(n.right||n._stubright);wp.push(P(n,'right'));})(root);
+  wp.push(P(root,'top'));
+  let path=`M${wp[0].x} ${wp[0].y}`;const segs=[],events=[];let tot=0;
+  for(let k=1;k<wp.length;k++){const a=wp[k-1],b=wp[k];const arc=a.n===b.n&&NEXTK[a.k]===b.k;const r=rOf(a.n);
+    const len=arc?Math.PI*r/2:Math.hypot(b.x-a.x,b.y-a.y);segs.push({a,b,arc,len,start:tot});tot+=len;
+    path+=arc?` A${r} ${r} 0 0 0 ${b.x} ${b.y}`:` L${b.x} ${b.y}`;
+    if(!b.n.stub&&KOF[b.k])events.push({n:b.n,kind:KOF[b.k],dist:T.S+tot,x:b.x,y:b.y});}
+  T.segs=segs;T.events=events;T.pathLen=tot;T.total=T.S+tot;T.d=0;T.target=null;
+  const eg=S('g',{},svg);
+  nodes.forEach(n=>['left','right'].forEach(s=>{if(n[s])S('line',{x1:n.tx,y1:n.ty,x2:n[s].tx,y2:n[s].ty,class:'tedge'},eg);}));
+  stubs.forEach(st=>{st.el=S('line',{x1:st.parent.tx,y1:st.parent.ty,x2:st.parent.tx,y2:st.parent.ty,class:'tstub'},eg);});
+  T.guide=S('path',{d:path,class:'tguide'},svg);
+  T.trace=S('path',{d:path,class:'ttrace'},svg);T.traceLen=T.trace.getTotalLength()||tot;
+  T.trace.style.strokeDasharray=T.traceLen;T.trace.style.strokeDashoffset=T.traceLen;
+  const sq=S('g',{},svg);stubs.forEach(st=>{st.sq=S('rect',{x:st.tx-5,y:st.ty-5,width:10,height:10,rx:2.5,class:'tnull'},sq);st.sq.style.opacity=0;});
+  T.nodeEls={};const ng=S('g',{},svg);
+  nodes.forEach(n=>{const g=S('g',{class:'tn',transform:`translate(${n.tx},${n.ty})`,'aria-label':n.val},ng);S('circle',{r:20},g);S('text',{},g).textContent=n.val;T.nodeEls[n.id]=g;
+    g.addEventListener('click',()=>trickPick(n));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();trickPick(n);}});});
+  const dg=S('g',{},svg);events.forEach(e=>{e.el=S('circle',{cx:e.x,cy:e.y,r:6,class:'tdot '+e.kind},dg);});
+  T.pen=S('circle',{r:7,class:'tpen',cx:wp[0].x,cy:wp[0].y},svg);
+  const pick=T.mode==='practice';svg.classList.toggle('pick',pick);
+  Object.values(T.nodeEls).forEach(g=>{g.setAttribute('tabindex',pick?'0':'-1');if(pick)g.setAttribute('role','button');});
+  trickApplyShow();trickRender();
+}
+function trickPos(d){
+  const sg=T.segs.find(s=>d<=s.start+s.len)||T.segs[T.segs.length-1];
+  const t=sg.len?Math.min(1,Math.max(0,(d-sg.start)/sg.len)):1;
+  if(sg.arc){const r=rOf(sg.a.n),ang=ANG[sg.a.k]-t*Math.PI/2;return[sg.a.n.tx+r*Math.cos(ang),sg.a.n.ty+r*Math.sin(ang)];}
+  return[sg.a.x+(sg.b.x-sg.a.x)*t,sg.a.y+(sg.b.y-sg.a.y)*t];
+}
+const relevant=e=>T.show==='all'||e.kind===T.show;
+function trickStops(){return[0,...T.stubs.map((_,j)=>(j+1)*T.U),...T.events.filter(relevant).map(e=>e.dist),T.total];}
+function trickApplyShow(){
+  const traceOn=T.mode==='watch'||PR.phase!=='edges';
+  T.events.forEach(e=>{e.el.style.display=relevant(e)&&traceOn?'':'none';});
+  document.querySelectorAll('#tab-trick .orow').forEach(r=>{r.classList.toggle('dim',T.show!=='all'&&r.dataset.k!==T.show);r.hidden=T.mode==='practice'&&r.dataset.k!==T.show;});
+}
+function drawStubs(activeIdx){
+  T.stubs.forEach((st,j)=>{const g=st.g;
+    st.el.setAttribute('x2',st.parent.tx+(st.tx-st.parent.tx)*g);st.el.setAttribute('y2',st.parent.ty+(st.ty-st.parent.ty)*g);
+    st.el.style.opacity=g>0?1:0;st.sq.style.opacity=g>=1?1:0;
+    st.el.classList.toggle('new',j===activeIdx);st.sq.classList.toggle('tnull-new',j===activeIdx);});
+}
+function trickRender(){
+  const d=T.d,pd=Math.max(0,d-T.S),watch=T.mode==='watch';
+  let activeStub=-1;
+  if(watch){T.stubs.forEach((st,j)=>{st.g=Math.min(1,Math.max(0,(d-j*T.U)/T.U));});
+    if(d>0.5&&d<T.S+0.5)activeStub=Math.min(T.stubs.length-1,Math.ceil(d/T.U-0.001)-1);}
+  drawStubs(activeStub);
+  const complete=T.stubs.every(st=>st.g>=1);
+  const showLine=complete&&(watch||PR.phase!=='edges');T.guide.style.opacity=showLine?1:0;T.pen.style.opacity=showLine?1:0;
+  const[x,y]=trickPos(pd);T.pen.setAttribute('cx',x);T.pen.setAttribute('cy',y);
+  T.trace.style.strokeDashoffset=T.traceLen*(1-pd/T.pathLen);
+  const passed=T.events.filter(e=>e.dist<=d+0.5);const rel=passed.filter(relevant);const last=rel[rel.length-1];
+  T.events.forEach(e=>e.el.classList.toggle('got',e.dist<=d+0.5));
+  const curId=activeStub>=0?T.stubs[activeStub].parent.id:(last&&d<T.total-0.5?last.n.id:null);
+  for(const id in T.nodeEls)T.nodeEls[id].classList.toggle('cur',watch&&curId===id);
+  const n=T.events.length/3;
+  for(const k of['pre','in','post']){const got=passed.filter(e=>e.kind===k);
+    const chips=got.map(e=>`<span class="chip ${k}${last&&e===last?' new':''}">${esc(e.n.val)}</span>`);
+    for(let j=got.length;j<n;j++)chips.push('<span class="chip ghosty">?</span>');
+    $({pre:'oPre',in:'oIn',post:'oPost'}[k]).innerHTML=chips.join('');}
+  const inStep1=watch?d<T.S-0.5:PR.phase==='edges';const finished=watch?d>=T.total-0.5:PR.phase==='done';
+  $('st1').className=inStep1?'on':'done';$('st2').className=inStep1?'':(finished?'done':'on');
+  $('st1').querySelector('b').textContent=inStep1?'1':'✓';$('st2').querySelector('b').textContent=finished?'✓':'2';
+  if(!watch)return;
+  let msg;
+  if(inStep1){if(activeStub<0)msg=`First, give every node exactly two edges. This tree needs ${T.stubs.length} empty edges.`;
+    else{const st=T.stubs[activeStub];msg=`${st.parent.val} has no ${st.side} child, so add an empty edge (${activeStub+1} of ${T.stubs.length}).`;}}
+  else if(finished)msg=T.show==='all'?'Back at the top. All three orders are done.':`Back at the top. ${ONAME[T.show]} is done.`;
+  else if(!last)msg='The tree is complete: every node has two edges. Now start above the root and trace anticlockwise.';
+  else msg=`${last.n.val}: ${SIDE[last.kind]}, so ${ONAME[last.kind].toLowerCase()} writes ${last.n.val}.`;
+  $('tNarr').textContent=msg;
+}
+function trickSpeed(){return 50+(+$('tSpeed').value)*3.5;}
+function trickSetIcon(){$('tPlayIco').innerHTML=T.playing?'<path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/>':'<path d="M8 5v14l11-7z"/>';$('tPlay').setAttribute('aria-label',T.playing?'Pause':'Play');}
+function trickLoop(ts){
+  if(!T.playing)return;const dt=T.last?Math.min(.05,(ts-T.last)/1000):0;T.last=ts;
+  T.d+=trickSpeed()*dt*(T.mode==='practice'?1.6:1);
+  if(T.target!=null&&T.d>=T.target){T.d=T.target;trickRender();trickStop();return;}
+  if(T.d>=T.total){T.d=T.total;trickRender();trickStop();return;}
+  trickRender();T.raf=requestAnimationFrame(trickLoop);
+}
+function trickPlay(target){
+  if(T.d>=T.total-0.5&&target==null)T.d=0;
+  T.target=target==null?null:target;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches&&target!=null){T.d=target;trickRender();return;}
+  if(!T.playing){T.playing=true;T.last=0;trickSetIcon();T.raf=requestAnimationFrame(trickLoop);}
+}
+function trickStop(){T.playing=false;T.target=null;cancelAnimationFrame(T.raf);if($('tPlayIco'))trickSetIcon();}
+
+/* practice: complete the tree, then be the pencil */
+const PR={phase:'edges',kind:'pre',idx:0,mistakes:0,edgeMistakes:0,revealed:false,recorded:false};
+let tStats={clean:0,total:0};
+try{const v=JSON.parse(localStorage.getItem('traversal-lab-trick'));if(v&&typeof v.total==='number')tStats=v;}catch(e){}
+function tTally(){$('pTally').textContent=tStats.total?`Clean solves: ${tStats.clean} of ${tStats.total}`:'';}
+function tRecord(){if(PR.recorded)return;PR.recorded=true;tStats.total++;if(!PR.revealed&&!PR.mistakes&&!PR.edgeMistakes)tStats.clean++;
+  try{localStorage.setItem('traversal-lab-trick',JSON.stringify(tStats));}catch(e){}tTally();}
+function tFb(text,cls){$('tFb').className='feedback'+(cls?' '+cls:'');$('tFb').textContent=text;}
+function tFlash(n){const g=T.nodeEls[n.id];g.classList.remove('wrong');void g.getBBox();g.classList.add('wrong');setTimeout(()=>g.classList.remove('wrong'),600);}
+function growStub(st){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){st.g=1;trickRender();return;}
+  const t0=performance.now();(function f(ts){st.g=Math.min(1,(ts-t0)/320);trickRender();if(st.g<1)requestAnimationFrame(f);})(t0);
+}
+const kindHTML=k=>`<em class="${k}-c">${ONAME[k]}</em>`;
+function practiceNew(){
+  trickStop();Object.assign(PR,{phase:'edges',kind:pick(['pre','in','post']),idx:0,mistakes:0,edgeMistakes:0,revealed:false,recorded:false,added:new Set()});
+  T.show=PR.kind;trickBuild(randomTree(5+rnd(4)));
+  $('pDone').hidden=false;
+  $('tNarr').innerHTML='<b>Step 1.</b> Tap every node that is missing a child to give it its empty edges.';
+  tFb('Leaves need two. Watch out for nodes with only one child.');
+}
+function practiceStartTrace(){
+  PR.phase='trace';$('pDone').hidden=true;T.d=T.S;trickApplyShow();trickRender();
+  $('tNarr').innerHTML=`<b>Step 2.</b> Be the pencil: tap nodes in the order the outline passes their ${DOTW[PR.kind]} dots, for ${kindHTML(PR.kind)}.`;
+  tFb('The tree is complete. Follow the dotted outline from the top of the root.');
+}
+function trickPick(n){
+  if(T.mode!=='practice'||PR.phase==='done')return;
+  if(PR.phase==='edges'){
+    const missing=['left','right'].filter(s=>!n[s]);
+    if(!missing.length){PR.edgeMistakes++;tFlash(n);tFb(`✕ ${n.val} already has two children, so it doesn’t need an empty edge.`,'bad');return;}
+    if(PR.added.has(n.id)){tFb(`${n.val} already has its empty edge${missing.length>1?'s':''}.`);return;}
+    PR.added.add(n.id);missing.forEach(s=>growStub(n['_stub'+s]));
+    const cnt=T.stubs.filter(st=>PR.added.has(st.parent.id)).length;
+    tFb(`${n.val} ${missing.length===2?'is a leaf, so it gets two empty edges':'has one child, so it gets one empty edge'}. ${cnt} edge${cnt===1?'':'s'} added so far.`);
+    return;
+  }
+  const ev=T.events.filter(e=>e.kind===PR.kind);const want=ev[PR.idx];
+  if(n.id===want.n.id){PR.idx++;trickPlay(want.dist);
+    if(PR.idx===ev.length){PR.phase='done';tRecord();trickRender();
+      const parts=[PR.edgeMistakes?`${PR.edgeMistakes} slip${PR.edgeMistakes>1?'s':''} in step 1`:'step 1 perfect',PR.mistakes?`${PR.mistakes} wrong tap${PR.mistakes>1?'s':''} in step 2`:'step 2 perfect'];
+      tFb(`✓ Done: ${ev.map(e=>e.n.val).join(' ')}. ${parts.join(', ')}.`,PR.mistakes||PR.edgeMistakes?'':'ok');}
+    else tFb(`✓ ${n.val}. ${PR.idx} of ${ev.length}.`,'ok');}
+  else{PR.mistakes++;tFlash(n);tFb(`✕ Not ${n.val} yet. Follow the line from the pencil to the next ${DOTW[PR.kind]} dot.`,'bad');}
+}
+$('pDone').addEventListener('click',()=>{
+  if(PR.phase!=='edges')return;
+  const left=T.stubs.filter(st=>!PR.added.has(st.parent.id));
+  if(left.length){PR.edgeMistakes++;tFb(`✕ Not yet: ${left.length} more empty edge${left.length>1?'s are':' is'} missing. Check every leaf and every node with only one child.`,'bad');return;}
+  practiceStartTrace();});
+$('pReveal').addEventListener('click',()=>{
+  PR.revealed=true;
+  if(PR.phase==='edges'){T.stubs.forEach(st=>{if(!PR.added.has(st.parent.id)){PR.added.add(st.parent.id);}if(st.g<1)growStub(st);});
+    setTimeout(practiceStartTrace,450);return;}
+  if(PR.phase==='trace'){const ev=T.events.filter(e=>e.kind===PR.kind);PR.idx=ev.length;PR.phase='done';tRecord();trickPlay(T.total);
+    tFb(`${ONAME[PR.kind]}: ${ev.map(e=>e.n.val).join(' ')}`);trickRender();}});
+$('pNew').addEventListener('click',practiceNew);
+
+function setTrickMode(m){
+  T.mode=m;setPressed($('segTMode'),m);const pr=m==='practice';
+  $('fShow').hidden=pr;$('fTree').hidden=pr;$('trickRand').hidden=pr;$('tControls').hidden=pr;$('pBar').hidden=!pr;
+  if(pr){practiceNew();tTally();}
+  else{T.show=document.querySelector('#segTrick [aria-pressed="true"]').dataset.v;
+    const v=$('trickPreset').value;trickBuild(v==='custom'||v===''?randomTree(6+rnd(3)):parseLevel(PRESETS.tree[+v][1]).root);}
+}
+function trickInit(){if(T.inited)return;T.inited=true;
+  $('trickPreset').innerHTML=PRESETS.tree.map((p,i)=>`<option value="${i}">${esc(p[0])}</option>`).join('')+'<option value="custom" hidden>Random tree</option>';
+  trickBuild(parseLevel(PRESETS.tree[0][1]).root);}
+$('segTMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.dataset.v===T.mode)return;setTrickMode(b.dataset.v);});
+$('trickPreset').addEventListener('change',e=>{if(e.target.value==='custom')return;trickBuild(parseLevel(PRESETS.tree[+e.target.value][1]).root);});
+$('trickRand').addEventListener('click',()=>{trickBuild(randomTree(5+rnd(5)));$('trickPreset').value='custom';});
+$('segTrick').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;T.show=b.dataset.v;setPressed($('segTrick'),T.show);trickApplyShow();trickRender();});
+$('tPlay').addEventListener('click',()=>T.playing?trickStop():trickPlay(null));
+$('tNext').addEventListener('click',()=>{const nx=trickStops().find(x=>x>T.d+0.5);trickPlay(nx==null?T.total:nx);});
+$('tPrev').addEventListener('click',()=>{trickStop();const pv=trickStops().filter(x=>x<T.d-0.5);T.d=pv.length?pv[pv.length-1]:0;trickRender();});
+$('tReset').addEventListener('click',()=>{trickStop();T.d=0;trickRender();});
+
+/* ---------- boot ---------- */
+fillPresets();setDataLabel();$('dataIn').value=PRESETS.tree[0][1];loadData($('dataIn').value);renderStats();
+const h=(location.hash||'').slice(1);if(h==='practice'||h==='sheet'||h==='trick')showTab(h);
+})();
+</script>
