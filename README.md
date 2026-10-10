@@ -1,4 +1,4 @@
-# Traversal Lab
+# Traver
 
 Interactive, animated study tool for binary tree and linked list traversals: pre-order, in-order, post-order and level-order.
 
