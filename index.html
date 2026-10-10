@@ -62,20 +62,44 @@ p{margin:0}
 .tabs button{border:0; background:none; min-height:40px; padding:0 18px; border-radius:999px; cursor:pointer; font-weight:600; font-size:15px; color:var(--label-2); white-space:nowrap; transition:background .25s var(--ease), color .25s var(--ease)}
 .tabs button[aria-selected="true"]{background:var(--fill-2); color:var(--label)}
 
-.brand{display:flex; align-items:center; justify-content:center; padding-top:22px}
-/* wordmark: solid label colour; a "pencil" dot visits each letter once on load, tap to replay */
-.wordmark{position:relative; font-family:"Inter Tight", var(--font); font-weight:800; font-size:clamp(44px,7vw,60px); letter-spacing:-.045em; line-height:1;
-  color:var(--label); padding:0 0 .2em; cursor:default; -webkit-user-select:none; user-select:none; font-feature-settings:"cv05","cv11"}
-.wm-l{display:inline-block; transition:color .35s var(--ease), transform .5s cubic-bezier(.34,1.4,.64,1)}
-.wordmark.pre .wm-l{color:var(--label-3)}
+/* brand row: wordmark leading, About button trailing; on wide screens it sits level with the floating tab bar */
+.page{position:relative}
+.brand{display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:14px; padding-bottom:10px; min-height:50px}
+.wmwrap{display:flex; align-items:center; gap:10px; min-width:0}
+.wordmark{position:relative; display:inline-flex; align-items:flex-start; height:1.5em; padding:0; margin:0; border:0; background:none; cursor:pointer;
+  font-family:"Inter Tight", var(--font); font-weight:800; font-size:30px; letter-spacing:-.045em; line-height:1.15; color:var(--label);
+  -webkit-user-select:none; user-select:none; font-feature-settings:"cv05","cv11"}
+.wordmark:active{opacity:1}
+.wm-l{display:inline-block; transition:transform .55s cubic-bezier(.34,1.45,.64,1), color .3s var(--ease)}
+.wordmark.tree .wm-l{color:var(--label-3)}
 .wordmark .wm-l.v{color:var(--label)}
-.wordmark .wm-l.lift{transform:translateY(-.07em)}
-.wm-dot{position:absolute; left:0; bottom:.04em; width:.13em; height:.13em; margin-left:-.065em; border-radius:50%; background:var(--tint);
-  opacity:0; transform:translateX(0) scale(.4); transition:transform .16s var(--ease), opacity .3s var(--ease)}
+@media (hover:hover){ .wordmark:hover .wm-l{transform:translateY(-1px)} .wordmark.tree:hover .wm-l{transform:none} }
+.wm-dot{position:absolute; left:0; top:0; width:5px; height:5px; margin:-2.5px 0 0 -2.5px; border-radius:50%; background:var(--tint); opacity:0; pointer-events:none;
+  transition:transform .17s var(--ease), opacity .25s var(--ease)}
 .wm-dot.on{opacity:1}
-.wm-dot.gone{opacity:0; transform:var(--wm-x) scale(.2)}
-.hero{display:flex; flex-direction:column; gap:6px; padding-top:4px}
-.hero p{font-size:17px; color:var(--label-2); max-width:62ch}
+.wm-edge{position:absolute; left:0; top:0; pointer-events:none; overflow:visible; opacity:0; transition:opacity .3s var(--ease)}
+.wm-edge line{stroke:var(--sep); stroke-width:1.25; stroke-linecap:round}
+.wordmark.tree .wm-edge{opacity:1}
+.wm-cap{font-size:12px; font-weight:600; color:var(--label-2); white-space:nowrap; opacity:0; transform:translateX(-4px); transition:opacity .3s var(--ease), transform .3s var(--ease), margin .55s cubic-bezier(.34,1.45,.64,1)}
+.wm-cap.show{opacity:1; transform:none}
+.about-btn{width:32px; height:32px; border-radius:50%; border:0; background:var(--fill); color:var(--label-2); display:grid; place-items:center; cursor:pointer; flex:none; padding:0}
+.about-btn svg{width:18px; height:18px; fill:currentColor}
+.about-btn:active{opacity:.7}
+.about{border:0; padding:0; margin:auto; width:min(440px, calc(100% - 32px)); border-radius:22px; background:var(--cell); color:var(--label);
+  box-shadow:0 24px 64px rgba(0,0,0,.25)}
+.about::backdrop{background:rgba(0,0,0,.35)}
+.about-in{padding:22px; display:flex; flex-direction:column; gap:14px}
+.about h2{font-size:22px; font-weight:700; letter-spacing:-.01em}
+.about p{font-size:15px; color:var(--label-2)}
+.keys{display:grid; grid-template-columns:auto 1fr; gap:8px 12px; font-size:14px; align-items:center; background:var(--cell-2); border-radius:12px; padding:12px 14px}
+.keys kbd{font:600 12px var(--mono); background:var(--cell); border-radius:6px; padding:3px 7px; box-shadow:inset 0 -1px 0 var(--sep); justify-self:start}
+.about .src{padding:0}
+.about .btn{align-self:flex-end}
+@media (min-width:1080px){
+  .brand{position:absolute; top:24px; left:16px; right:16px; height:50px; min-height:0; padding:0; z-index:21; pointer-events:none}
+  .brand > *{pointer-events:auto}
+  .nav{padding-top:14px; margin-bottom:10px}
+}
 
 /* grouped cells */
 .cell{background:var(--cell); border-radius:22px}
@@ -375,8 +399,6 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
   .nav{padding-top:6px}
   .tabs{width:100%}
   .tabs button{flex:1; padding:0 4px; font-size:13px; min-height:38px}
-  .brand{padding-top:14px}
-  .hero p{font-size:15px}
   .statbar b{font-size:20px}
   .qcard,.sumcard{padding:16px}
   .qtext{font-size:19px}
@@ -404,8 +426,27 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
 
 <div class="page">
   <header class="brand">
-    <h1 class="wordmark">Traver</h1>
+    <div class="wmwrap">
+      <h1 style="margin:0; font-size:inherit"><button class="wordmark" id="wordmark" type="button" aria-label="Traver. Tap to play a traversal of the logo." title="Tap to traverse the logo">Traver</button></h1>
+      <span class="wm-cap" id="wmCap" aria-live="polite"></span>
+    </div>
+    <button class="about-btn" id="aboutBtn" type="button" aria-label="About Traver" title="About Traver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 10h2v7h-2zM12 6.25a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z"/></svg></button>
   </header>
+
+  <dialog class="about" id="about" aria-labelledby="aboutTitle">
+    <div class="about-in">
+      <h2 id="aboutTitle">About Traver</h2>
+      <p>Watch pre-order, in-order, post-order and level-order run one step at a time on binary trees and linked lists. Then practise the questions exams ask.</p>
+      <div class="keys">
+        <kbd>Space</kbd><span>Play or pause</span>
+        <kbd>← →</kbd><span>Step back or forward</span>
+        <kbd>Home</kbd><span>Restart</span>
+      </div>
+      <p>Tap the logo: its six letters form a tiny binary tree, and each tap traverses it in a different order.</p>
+      <p class="src">The outline trick is adapted from <a href="https://www.youtube.com/watch?v=XRcC7bAtL3c" target="_blank" rel="noopener">Preorder, Inorder and Postorder in 5 Minutes</a>.</p>
+      <button class="btn prominent" id="aboutDone" type="button">Done</button>
+    </div>
+  </dialog>
 
   <div class="nav">
     <nav class="tabs glass" role="tablist">
@@ -416,9 +457,7 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
     </nav>
   </div>
 
-  <header class="hero" id="hero">
-    <p>Watch pre-order, in-order, post-order and level-order run one step at a time on binary trees and linked lists. Then practise the questions exams ask.</p>
-  </header>
+  
 
   <!-- ================= VISUALISE ================= -->
   <section id="tab-viz" style="display:flex; flex-direction:column; gap:20px">
@@ -1164,7 +1203,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- tabs ---------- */
-function showTab(t){$('hero').hidden=t!=='viz';['viz','trick','practice','sheet'].forEach(k=>{const el=$('tab-'+k);el.hidden=k!==t;if(k!=='sheet')el.style.display=k===t?'flex':'';$('t-'+k).setAttribute('aria-selected',k===t);});
+function showTab(t){['viz','trick','practice','sheet'].forEach(k=>{const el=$('tab-'+k);el.hidden=k!==t;if(k!=='sheet')el.style.display=k===t?'flex':'';$('t-'+k).setAttribute('aria-selected',k===t);});
   if(t!=='viz')stop();if(t!=='trick')trickStop();if(t==='trick')trickInit();if(t==='practice'&&!Q.cur)newQuestion();}
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab);});
 
@@ -1503,33 +1542,60 @@ $('tReset').addEventListener('click',()=>{trickStop();T.d=0;trickRender();});
 
 $('sheetToTrick').addEventListener('click',()=>{showTab('trick');window.scrollTo({top:0,behavior:'smooth'});});
 
-/* ---------- wordmark ---------- */
+/* ---------- wordmark: the six letters are a balanced binary tree; each tap traverses it ---------- */
 (function(){
-  const wm=document.querySelector('.wordmark');if(!wm)return;
-  const word=wm.textContent.trim();wm.setAttribute('aria-label',word);
-  wm.innerHTML=[...word].map(c=>`<span class="wm-l" aria-hidden="true">${c}</span>`).join('')+'<span class="wm-dot" aria-hidden="true"></span>';
-  const letters=[...wm.querySelectorAll('.wm-l')],dot=wm.querySelector('.wm-dot');
-  const reduce=matchMedia('(prefers-reduced-motion: reduce)');let timers=[];
-  function run(){
+  const wm=$('wordmark'),cap=$('wmCap');if(!wm)return;
+  const word=wm.textContent.trim();
+  wm.innerHTML=[...word].map(c=>`<span class="wm-l" aria-hidden="true">${c}</span>`).join('')+'<svg class="wm-edge" aria-hidden="true"></svg><span class="wm-dot" aria-hidden="true"></span>';
+  const L=[...wm.querySelectorAll('.wm-l')],dot=wm.querySelector('.wm-dot'),edgeSvg=wm.querySelector('.wm-edge');
+  // in-order = reading order, so build the balanced tree over letter indices
+  const depth=[],kids={};let root=-1;
+  (function b(lo,hi,d,parent){if(lo>hi)return -1;const m=(lo+hi)>>1;depth[m]=d;if(parent<0)root=m;else(kids[parent]=kids[parent]||[]).push(m);b(lo,m-1,d+1,m);b(m+1,hi,d+1,m);return m;})(0,L.length-1,0,-1);
+  const kid=(m,side)=>{const k=(kids[m]||[]);return side==='l'?k.find(x=>x<m):k.find(x=>x>m);};
+  const orders={
+    in:[...L.keys()],
+    pre:(function f(m,o=[]){if(m==null)return o;o.push(m);f(kid(m,'l'),o);f(kid(m,'r'),o);return o;})(root),
+    post:(function f(m,o=[]){if(m==null)return o;f(kid(m,'l'),o);f(kid(m,'r'),o);o.push(m);return o;})(root),
+    level:(()=>{const o=[],q=[root];while(q.length){const m=q.shift();o.push(m);[kid(m,'l'),kid(m,'r')].forEach(x=>x!=null&&q.push(x));}return o;})()
+  };
+  const cycle=['in','pre','post','level'];let next=0,timers=[];
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+  const fs=()=>parseFloat(getComputedStyle(wm).fontSize);const drop=()=>fs()*0.3;const spread=i=>i*fs()*0.2;
+  const pos=i=>{const l=L[i];return{x:l.offsetLeft+l.offsetWidth/2+spread(i),y:l.offsetTop+l.offsetHeight*0.9+depth[i]*drop()};};
+  function drawEdges(){
+    const NSs='http://www.w3.org/2000/svg';edgeSvg.innerHTML='';
+    edgeSvg.setAttribute('width',wm.offsetWidth+fs()*1.2);edgeSvg.style.left=(-fs()*0.6)+'px';edgeSvg.setAttribute('height',wm.offsetHeight+drop()*3);
+    Object.keys(kids).forEach(pi=>kids[pi].forEach(ci=>{const a=pos(+pi),b=pos(ci);
+      const ox=fs()*0.6;const ln=document.createElementNS(NSs,'line');ln.setAttribute('x1',a.x+ox);ln.setAttribute('y1',a.y+3);ln.setAttribute('x2',b.x+ox);ln.setAttribute('y2',b.y-L[ci].offsetHeight*0.62);edgeSvg.appendChild(ln);}));
+  }
+  function run(order){
     if(reduce.matches)return;
     timers.forEach(clearTimeout);timers=[];
-    wm.classList.add('pre');letters.forEach(l=>l.classList.remove('v','lift'));
-    const at=l=>`translateX(${l.offsetLeft+l.offsetWidth/2}px)`;
-    dot.className='wm-dot';dot.style.transition='none';dot.style.transform=at(letters[0])+' scale(.4)';void dot.offsetWidth;dot.style.transition='';
-    const step=150;
-    timers.push(setTimeout(()=>{dot.classList.add('on');},40));
-    letters.forEach((l,i)=>{
-      timers.push(setTimeout(()=>{dot.style.transform=at(l)+' scale(1)';},80+i*step));
-      timers.push(setTimeout(()=>{l.classList.add('v','lift');},140+i*step));
-      timers.push(setTimeout(()=>{l.classList.remove('lift');},140+i*step+260));
-    });
-    const end=140+letters.length*step;
-    timers.push(setTimeout(()=>{dot.style.setProperty('--wm-x',at(letters[letters.length-1]));dot.style.transform='';dot.classList.add('gone');},end+120));
-    timers.push(setTimeout(()=>{wm.classList.remove('pre');},end+500));
+    const seq=orders[order],T=(f,t)=>timers.push(setTimeout(f,t));
+    cap.textContent=ONAME[order]+': '+seq.map(i=>word[i]).join(' ');cap.classList.add('show');
+    wm.classList.add('tree');cap.style.marginLeft=spread(L.length-1)+'px';L.forEach((l,i)=>{l.classList.remove('v');l.style.transform=`translate(${spread(i)}px,${depth[i]*drop()}px)`;});
+    drawEdges();
+    const place=i=>{const p=pos(i);dot.style.transform=`translate(${p.x}px,${p.y+5}px)`;};
+    dot.classList.remove('on');dot.style.transition='none';place(seq[0]);void dot.offsetWidth;dot.style.transition='';
+    const step=170,start=420;
+    T(()=>dot.classList.add('on'),start-60);
+    seq.forEach((i,k)=>{T(()=>{place(i);},start+k*step);T(()=>L[i].classList.add('v'),start+k*step+70);});
+    const end=start+seq.length*step+260;
+    T(()=>dot.classList.remove('on'),end);
+    T(()=>{cap.style.marginLeft='';wm.classList.remove('tree');L.forEach(l=>{l.style.transform='';l.classList.remove('v');});},end+120);
+    T(()=>cap.classList.remove('show'),end+1100);
   }
-  wm.addEventListener('click',run);
-  const go=()=>requestAnimationFrame(run);
-  (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,800))]):Promise.resolve()).then(go);
+  wm.addEventListener('click',()=>{next=(next+1)%cycle.length;run(cycle[next]);});
+  (document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,800))]):Promise.resolve()).then(()=>setTimeout(()=>run('in'),250));
+})();
+
+/* ---------- About sheet ---------- */
+(function(){
+  const d=$('about');
+  const open=()=>{if(d.showModal)d.showModal();else d.setAttribute('open','');};
+  const close=()=>{if(d.close)d.close();else d.removeAttribute('open');};
+  $('aboutBtn').addEventListener('click',open);$('aboutDone').addEventListener('click',close);
+  d.addEventListener('click',e=>{if(e.target===d)close();});
 })();
 
 /* ---------- boot ---------- */
