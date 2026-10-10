@@ -83,9 +83,15 @@ p{margin:0}
 .wm-cap{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--label-2); background:var(--fill); border-radius:999px; padding:4px 10px 4px 8px; white-space:nowrap; opacity:0; transform:translateX(-4px); transition:opacity .3s var(--ease), transform .3s var(--ease), margin .55s cubic-bezier(.34,1.45,.64,1)}
 .wm-cap.show{opacity:1; transform:none}
 .wm-cap::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--tint)}
-.about-btn{width:32px; height:32px; border-radius:50%; border:0; background:var(--fill); color:var(--label-2); display:grid; place-items:center; cursor:pointer; flex:none; padding:0}
-.about-btn svg{width:18px; height:18px; fill:currentColor}
-.about-btn:active{opacity:.7}
+.about-btn{width:36px; height:36px; border-radius:50%; border:0; padding:0; flex:none; cursor:pointer; display:grid; place-items:center;
+  background:color-mix(in srgb, var(--tint) 15%, transparent); color:var(--tint); transition:transform .2s var(--ease), opacity .2s var(--ease)}
+.about-btn svg{width:22px; height:22px; fill:currentColor}
+.about-btn:active{opacity:.7; transform:scale(.94)}
+/* first-visit nudge: wiggle (HIG: attention) plus a soft glow, twice */
+.about-btn.nudge{animation:about-wiggle .7s var(--ease) 2 both, about-glow 1.4s ease-out 2}
+@keyframes about-wiggle{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(4deg)}}
+@keyframes about-glow{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--tint) 55%, transparent)}100%{box-shadow:0 0 0 14px color-mix(in srgb, var(--tint) 0%, transparent)}}
+@media (prefers-reduced-motion: reduce){ .about-btn.nudge{animation:none; box-shadow:0 0 0 3px color-mix(in srgb, var(--tint) 45%, transparent)} }
 .about{border:0; padding:0; margin:auto; width:min(440px, calc(100% - 32px)); border-radius:22px; background:var(--cell); color:var(--label);
   box-shadow:0 24px 64px rgba(0,0,0,.25)}
 .about::backdrop{background:rgba(0,0,0,.35)}
@@ -431,7 +437,7 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
       <h1 style="margin:0; font-size:inherit"><button class="wordmark" id="wordmark" type="button" aria-label="Traver. Tap to play a traversal of the logo." title="Tap to traverse the logo">Traver</button></h1>
       <span class="wm-cap" id="wmCap" aria-live="polite"></span>
     </div>
-    <button class="about-btn" id="aboutBtn" type="button" aria-label="About Traver" title="About Traver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 10h2v7h-2zM12 6.25a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z"/></svg></button>
+    <button class="about-btn" id="aboutBtn" type="button" aria-label="About Traver" title="About Traver"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="10.4" y="10.2" width="3.2" height="8.4" rx="1.6"/><circle cx="12" cy="6.5" r="2"/></svg></button>
   </header>
 
   <dialog class="about" id="about" aria-labelledby="aboutTitle">
@@ -1595,6 +1601,11 @@ $('sheetToTrick').addEventListener('click',()=>{showTab('trick');window.scrollTo
   const d=$('about');
   const open=()=>{if(d.showModal)d.showModal();else d.setAttribute('open','');};
   const close=()=>{if(d.close)d.close();else d.removeAttribute('open');};
+  const btn=$('aboutBtn');let seen=false;
+  try{seen=localStorage.getItem('traver-about-seen')==='1';}catch(e){}
+  if(!seen){setTimeout(()=>btn.classList.add('nudge'),2400);
+    btn.addEventListener('animationend',e=>{if(e.animationName==='about-glow')btn.classList.remove('nudge');});}
+  btn.addEventListener('click',()=>{btn.classList.remove('nudge');try{localStorage.setItem('traver-about-seen','1');}catch(e){}});
   $('aboutBtn').addEventListener('click',open);$('aboutDone').addEventListener('click',close);
   d.addEventListener('click',e=>{if(e.target===d)close();});
 })();
