@@ -484,7 +484,7 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
         </div>
       </div>
       <div class="field"><label class="cap" for="lang">Code</label>
-        <select id="lang"><option value="py">Python</option><option value="java">Java</option><option value="cpp">C++</option></select>
+        <select id="lang"><option value="c">C</option><option value="py">Python</option><option value="java">Java</option><option value="cpp">C++</option></select>
       </div>
       <div class="field"><label class="cap" for="preset">Example</label>
         <select id="preset"></select>
@@ -765,11 +765,24 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
       </div>
 
       <div class="cell wide" id="cs-code">
-        <h2>Code you should be able to write</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap">
+          <h2>Code you should be able to write</h2>
+          <div class="seg" id="segSheetLang"><button data-v="c" aria-pressed="true">C</button><button data-v="py" aria-pressed="false">Python</button></div>
+        </div>
+        <p class="sub" id="cDefs"><code>struct Node { int val; struct Node *left, *right; };</code> and <code>#define MAX 100</code></p>
         <div class="exgrid" style="align-items:start">
           <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
             <span class="snipcap">One template, three orders: only the visit moves</span>
-<pre class="snip"><span class="kw">def</span> dfs(node):
+<pre class="snip" data-lang="c"><span class="kw">void</span> dfs(<span class="kw">struct</span> Node *node) {
+    <span class="kw">if</span> (node == <span class="kw">NULL</span>)
+        <span class="kw">return</span>;
+    <span class="vp">visit(node);   // pre-order goes here</span>
+    dfs(node->left);
+    <span class="vi">visit(node);   // in-order goes here</span>
+    dfs(node->right);
+    <span class="vo">visit(node);   // post-order goes here</span>
+}</pre>
+<pre class="snip" data-lang="py" hidden><span class="kw">def</span> dfs(node):
     <span class="kw">if</span> node <span class="kw">is None</span>:
         <span class="kw">return</span>
     <span class="vp">visit(node)   # pre-order goes here</span>
@@ -780,7 +793,21 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
           </div>
           <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
             <span class="snipcap">In-order without recursion (explicit stack)</span>
-<pre class="snip"><span class="kw">def</span> inorder(root):
+<pre class="snip" data-lang="c"><span class="kw">void</span> inorder(<span class="kw">struct</span> Node *root) {
+    <span class="kw">struct</span> Node *stack[MAX];
+    <span class="kw">int</span> top = 0;
+    <span class="kw">struct</span> Node *node = root;
+    <span class="kw">while</span> (top > 0 || node != <span class="kw">NULL</span>) {
+        <span class="kw">while</span> (node != <span class="kw">NULL</span>) {     <span class="cm">// go as far left as possible</span>
+            stack[top++] = node;
+            node = node->left;
+        }
+        node = stack[--top];
+        visit(node);
+        node = node->right;
+    }
+}</pre>
+<pre class="snip" data-lang="py" hidden><span class="kw">def</span> inorder(root):
     stack, node = [], root
     <span class="kw">while</span> stack <span class="kw">or</span> node:
         <span class="kw">while</span> node:              <span class="cm"># go as far left as possible</span>
@@ -792,7 +819,19 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
           </div>
           <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
             <span class="snipcap">Level-order (queue)</span>
-<pre class="snip"><span class="kw">def</span> levelorder(root):
+<pre class="snip" data-lang="c"><span class="kw">void</span> levelorder(<span class="kw">struct</span> Node *root) {
+    <span class="kw">if</span> (root == <span class="kw">NULL</span>) <span class="kw">return</span>;
+    <span class="kw">struct</span> Node *queue[MAX];
+    <span class="kw">int</span> front = 0, back = 0;
+    queue[back++] = root;
+    <span class="kw">while</span> (front < back) {
+        <span class="kw">struct</span> Node *node = queue[front++];
+        visit(node);
+        <span class="kw">if</span> (node->left)  queue[back++] = node->left;
+        <span class="kw">if</span> (node->right) queue[back++] = node->right;
+    }
+}</pre>
+<pre class="snip" data-lang="py" hidden><span class="kw">def</span> levelorder(root):
     queue = deque([root])
     <span class="kw">while</span> queue:
         node = queue.popleft()
@@ -802,7 +841,19 @@ code{font-family:var(--mono); font-size:13px; background:var(--fill); border-rad
           </div>
           <div style="display:flex; flex-direction:column; gap:6px; min-width:0">
             <span class="snipcap">Pre-order without recursion</span>
-<pre class="snip"><span class="kw">def</span> preorder(root):
+<pre class="snip" data-lang="c"><span class="kw">void</span> preorder(<span class="kw">struct</span> Node *root) {
+    <span class="kw">if</span> (root == <span class="kw">NULL</span>) <span class="kw">return</span>;
+    <span class="kw">struct</span> Node *stack[MAX];
+    <span class="kw">int</span> top = 0;
+    stack[top++] = root;
+    <span class="kw">while</span> (top > 0) {
+        <span class="kw">struct</span> Node *node = stack[--top];
+        visit(node);
+        <span class="kw">if</span> (node->right) stack[top++] = node->right;  <span class="cm">// right first,</span>
+        <span class="kw">if</span> (node->left)  stack[top++] = node->left;   <span class="cm">// so left pops first</span>
+    }
+}</pre>
+<pre class="snip" data-lang="py" hidden><span class="kw">def</span> preorder(root):
     stack = [root]
     <span class="kw">while</span> stack:
         node = stack.pop()
@@ -1022,6 +1073,11 @@ function codeLines(lang,mode,order){
       L.push([`def ${f}(root):`,'sig'],['    if root is None:','null'],['        return','null'],['    queue = deque([root])','init'],['    while queue:','loop'],
         ['        node = queue.popleft()','deq'],['        print(node.val)','visit']);
       kids.forEach(k=>{const t=k==='left'?'left':'right';L.push([`        if node.${k}:`,t],[`            queue.append(node.${k})`,t]);});
+    }else if(lang==='c'){
+      L.push([`void ${f}(struct Node *root) {`,'sig'],['    if (root == NULL) return;','null'],['    struct Node *queue[MAX];','init'],['    int front = 0, back = 0;','init'],['    queue[back++] = root;','init'],
+        ['    while (front < back) {','loop'],['        struct Node *node = queue[front++];','deq'],['        printf("%d ", node->val);','visit']);
+      kids.forEach(k=>L.push([`        if (node->${k}) queue[back++] = node->${k};`,k==='left'?'left':'right']));
+      L.push(['    }','loop'],['}','end']);
     }else if(lang==='java'){
       L.push([`void ${f}(Node root) {`,'sig'],['    if (root == null) return;','null'],['    Queue<Node> queue = new ArrayDeque<>();','init'],['    queue.add(root);','init'],
         ['    while (!queue.isEmpty()) {','loop'],['        Node node = queue.poll();','deq'],['        System.out.print(node.val + " ");','visit']);
@@ -1036,12 +1092,13 @@ function codeLines(lang,mode,order){
     return L;
   }
   const body={
-    visit:{py:'print(node.val)',java:'System.out.print(node.val + " ");',cpp:'cout << node->val << " ";'}[lang],
-    left:{py:`${f}(node.left)`,java:`${f}(node.left);`,cpp:`${f}(node->left);`}[lang],
-    right:{py:`${f}(node.${nx})`,java:`${f}(node.${nx});`,cpp:`${f}(node->${nx});`}[lang],
-    leftc:{py:'# a list node has no left child',java:'// a list node has no left child',cpp:'// a list node has no left child'}[lang],
+    visit:{c:'printf("%d ", node->val);',py:'print(node.val)',java:'System.out.print(node.val + " ");',cpp:'cout << node->val << " ";'}[lang],
+    left:{c:`${f}(node->left);`,py:`${f}(node.left)`,java:`${f}(node.left);`,cpp:`${f}(node->left);`}[lang],
+    right:{c:`${f}(node->${nx});`,py:`${f}(node.${nx})`,java:`${f}(node.${nx});`,cpp:`${f}(node->${nx});`}[lang],
+    leftc:{c:'// a list node has no left child',py:'# a list node has no left child',java:'// a list node has no left child',cpp:'// a list node has no left child'}[lang],
   };
-  if(lang==='py')L.push([`def ${f}(node):`,'sig'],['    if node is None:','null'],['        return','null']);
+  if(lang==='c')L.push([`void ${f}(struct Node *node) {`,'sig'],['    if (node == NULL)','null'],['        return;','null']);
+  else if(lang==='py')L.push([`def ${f}(node):`,'sig'],['    if node is None:','null'],['        return','null']);
   else if(lang==='java')L.push([`void ${f}(Node node) {`,'sig'],['    if (node == null)','null'],['        return;','null']);
   else L.push([`void ${f}(Node* node) {`,'sig'],['    if (node == nullptr)','null'],['        return;','null']);
   ORDERS[order].forEach(a=>{
@@ -1055,7 +1112,7 @@ function hl(line,lang){
   let h=esc(line);
   const cm=lang==='py'?/(#.*)$/:/(\/\/.*)$/;
   let comment='';const m=h.match(cm);if(m){comment=m[1];h=h.slice(0,m.index);}
-  const kws=lang==='py'?['def','if','is','None','return','while','print']:lang==='java'?['void','if','null','return','while','new']:['void','if','nullptr','return','while','cout'];
+  const kws={c:['void','struct','int','if','NULL','return','while','printf'],py:['def','if','is','None','return','while','print'],java:['void','if','null','return','while','new'],cpp:['void','if','nullptr','return','while','cout']}[lang];
   h=h.replace(new RegExp('\\b('+kws.join('|')+')\\b','g'),'<span class="kw">$1</span>');
   return h+(comment?'<span class="cm">'+comment+'</span>':'');
 }
@@ -1128,7 +1185,7 @@ const PRESETS={
 };
 
 /* ---------- Visualise ---------- */
-const V={mode:'tree',order:'pre',lang:'py',st:null,steps:[],i:0,playing:false,timer:null,showNull:true,flags:false};
+const V={mode:'tree',order:'pre',lang:'c',st:null,steps:[],i:0,playing:false,timer:null,showNull:true,flags:false};
 const board=new Board($('vizSvg'),'v');
 function setPressed(seg,v){seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));}
 function fillPresets(){$('preset').innerHTML=PRESETS[V.mode].map((p,i)=>`<option value="${i}">${esc(p[0])}</option>`).join('')+'<option value="custom" hidden>Custom</option>';}
@@ -1154,7 +1211,7 @@ function rebuild(){
 function renderCode(){
   const lines=codeLines(V.lang,V.mode,V.order);V.codeTags=lines.map(l=>l[1]);
   $('code').innerHTML=lines.map((l,i)=>`<div class="ln"><b>${i+1}</b>${hl(l[0],V.lang)}</div>`).join('');
-  $('codeName').textContent=V.lang==='py'?'Python':V.lang==='java'?'Java':'C++';
+  $('codeName').textContent={c:'C',py:'Python',java:'Java',cpp:'C++'}[V.lang];
   $('outName').textContent=ONAME[V.order];
   $('insight').innerHTML=INSIGHT[V.mode][V.order];
 }
@@ -1547,6 +1604,8 @@ $('tNext').addEventListener('click',()=>{const nx=trickStops().find(x=>x>T.d+0.5
 $('tPrev').addEventListener('click',()=>{trickStop();const pv=trickStops().filter(x=>x<T.d-0.5);T.d=pv.length?pv[pv.length-1]:0;trickRender();});
 $('tReset').addEventListener('click',()=>{trickStop();T.d=0;trickRender();});
 
+$('segSheetLang').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;setPressed($('segSheetLang'),v);
+  document.querySelectorAll('#cs-code .snip').forEach(x=>{x.hidden=x.dataset.lang!==v;});$('cDefs').hidden=v!=='c';});
 $('sheetToTrick').addEventListener('click',()=>{showTab('trick');window.scrollTo({top:0,behavior:'smooth'});});
 
 /* ---------- wordmark: the six letters are a balanced binary tree; each tap traverses it ---------- */

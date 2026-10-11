@@ -8,7 +8,7 @@
 
 ### Visualise
 - Animate **pre-order, in-order, post-order and level-order** on a **binary tree** or a **linked list**.
-- Follow the code line by line in **Python, Java or C++**, with a live **call stack** (or **queue** for level-order) and the output filling in beside the tree.
+- Follow the code line by line in **C** (the default), **Python**, Java or C++, with a live **call stack** (or **queue** for level-order) and the output filling in beside the tree.
 - Play, pause, step, scrub and change speed. Shortcuts: `Space` play/pause, `←` `→` step, `Home` restart.
 - Turn **null calls** on to see the recursion step into empty children, or turn on the **exam flag trick** to see where each node gets written down.
 - Load example trees (classic letters, an expression tree, a BST, a skewed "list in disguise"), type your own in level order, or generate a random one.
@@ -29,7 +29,7 @@ The outline method, animated:
 - Streak, best streak and first-try accuracy are saved in your browser.
 
 ### Cheat Sheet
-The four orders at a glance, one tree worked through in every order, which traversal suits which job, code you should be able to write (recursive and iterative), rebuilding a tree step by step, complexity, linked lists and common exam traps.
+The four orders at a glance, one tree worked through in every order, which traversal suits which job, code you should be able to write in C or Python (recursive and iterative), rebuilding a tree step by step, complexity, linked lists and common exam traps.
 
 ### Details
 - The logo is a tree too: its six letters form a balanced binary tree. Tap it to watch it traverse itself in a different order each time.
